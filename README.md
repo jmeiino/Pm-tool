@@ -1,6 +1,6 @@
 # PM-Tool — Personal Project Manager
 
-Ein persoenlicher Projektmanager mit KI-Unterstuetzung, der Jira, Confluence, GitHub und Microsoft 365 in einer einheitlichen Oberflaeche vereint. Plane deinen Tag mit Drag-and-Drop, lass dir von Claude AI Vorschlaege machen und behalte alle Projekte im Blick.
+Ein persoenlicher Projektmanager mit KI-Unterstuetzung, der Jira, Confluence, GitHub und Microsoft 365 in einer einheitlichen Oberflaeche vereint. Plane deinen Tag mit Drag-and-Drop, lass dir von KI Vorschlaege machen und behalte alle Projekte im Blick. Unterstuetzt mehrere KI-Provider (Claude, Ollama, OpenRouter) — konfigurierbar direkt in der GUI.
 
 ---
 
@@ -28,11 +28,14 @@ Ein persoenlicher Projektmanager mit KI-Unterstuetzung, der Jira, Confluence, Gi
 - **Persoenliche Todos** — Aufgaben mit Prioritaet, Schaetzung und Quellenzuordnung
 - **Tagesplanung** — Drag-and-Drop-Planung mit Zeitbloecken und Kapazitaetsanzeige
 - **Wochenplanung** — 5-Tage-Uebersicht (Mo–Fr) fuer die Wochenplanung
-- **KI-Unterstuetzung** — Claude AI fuer Tagesplan-Vorschlaege, Zusammenfassungen, Action-Item-Extraktion und Confluence-Analyse
+- **KI-Unterstuetzung** — Tagesplan-Vorschlaege, Zusammenfassungen, Action-Item-Extraktion, Confluence- und Repository-Analyse
+- **Multi-Provider KI** — Waehlbar zwischen Claude (Anthropic), Ollama (lokal) und OpenRouter (100+ Modelle)
+- **GitHub-Repository-Analyse** — Repositories per KI analysieren: Tech-Stack, Staerken, Verbesserungen, naechste Schritte
 - **Jira-Sync** — Bidirektionale Synchronisation von Projekten, Sprints und Issues
 - **Confluence-Integration** — Seiten importieren und per KI analysieren (Zusammenfassung, Entscheidungen, Risiken)
 - **GitHub-Tracking** — Commits, Pull Requests und deren Verknuepfung zu Issues
 - **Microsoft 365** — Kalender-Events via OAuth2 synchronisieren
+- **GUI-Einstellungen** — Alle Konfigurationen (Profil, KI-Provider, Integrationen) direkt in der Oberflaeche aenderbar
 - **Benachrichtigungen** — Deadline-Warnungen, Sync-Fehler und KI-Vorschlaege
 - **API-Dokumentation** — Automatisch generierte Swagger-UI
 
@@ -47,7 +50,7 @@ Ein persoenlicher Projektmanager mit KI-Unterstuetzung, der Jira, Confluence, Gi
 | **Datenbank** | PostgreSQL 16 |
 | **Message Broker** | Redis 7 |
 | **Task Queue** | Celery 5.4 mit django-celery-beat |
-| **KI** | Anthropic Claude API |
+| **KI** | Claude (Anthropic), Ollama (lokal), OpenRouter (Multi-Modell) |
 | **Styling** | Tailwind CSS 3.4 |
 | **State Management** | TanStack React Query 5, Zustand |
 | **Formulare** | React Hook Form + Zod |
@@ -81,7 +84,7 @@ Ein persoenlicher Projektmanager mit KI-Unterstuetzung, der Jira, Confluence, Gi
                                                        +-----------+
 ```
 
-**Externe Dienste:** Jira, Confluence, GitHub, Microsoft Graph API, Anthropic Claude
+**Externe Dienste:** Jira, Confluence, GitHub, Microsoft Graph API, Claude / Ollama / OpenRouter
 
 ---
 
@@ -105,7 +108,9 @@ cd Pm-tool
 cp .env.example .env
 ```
 
-Passe die `.env`-Datei an (siehe [Umgebungsvariablen](#umgebungsvariablen)).
+Die `.env`-Datei enthaelt Standardwerte fuer die lokale Entwicklung. KI-Provider,
+API-Keys und Integrationen koennen spaeter auch direkt in der GUI unter
+**Einstellungen** konfiguriert werden.
 
 ### 3. Starten (Entwicklung)
 
@@ -171,7 +176,22 @@ Alle Variablen werden in `.env` im Projektroot konfiguriert:
 | `MS_TENANT_ID` | Microsoft Azure Tenant-ID |
 | `MS_REDIRECT_URI` | OAuth2-Redirect-URI |
 | `GITHUB_TOKEN` | GitHub Personal Access Token |
-| `ANTHROPIC_API_KEY` | Anthropic Claude API-Key |
+
+### KI-Provider
+
+> **Hinweis:** Diese Variablen dienen als Fallback. Alle KI-Einstellungen koennen
+> auch direkt in der GUI unter **Einstellungen > KI-Provider** konfiguriert werden.
+> GUI-Einstellungen haben Vorrang vor `.env`-Werten.
+
+| Variable | Beschreibung | Standard |
+|---|---|---|
+| `AI_PROVIDER` | Aktiver Provider: `claude`, `ollama` oder `openrouter` | `claude` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude API-Key | |
+| `ANTHROPIC_MODEL` | Claude-Modell | `claude-sonnet-4-20250514` |
+| `OLLAMA_BASE_URL` | Ollama-Server-URL | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Ollama-Modell | `llama3.1` |
+| `OPENROUTER_API_KEY` | OpenRouter API-Key | |
+| `OPENROUTER_MODEL` | OpenRouter-Modell | `anthropic/claude-sonnet-4` |
 
 ### Frontend
 
@@ -184,13 +204,6 @@ Alle Variablen werden in `.env` im Projektroot konfiguriert:
 ## API-Endpunkte
 
 Basis-URL: `/api/v1/`
-
-### Users
-
-| Methode | Pfad | Beschreibung |
-|---|---|---|
-| `GET/POST` | `/users/` | Benutzer auflisten / erstellen |
-| `GET/PUT/PATCH/DELETE` | `/users/{id}/` | Benutzer-CRUD |
 
 ### Projects
 
@@ -225,6 +238,9 @@ Basis-URL: `/api/v1/`
 | `GET/POST` | `/integrations/confluence-pages/` | Confluence-Seiten |
 | `GET/POST` | `/integrations/calendar-events/` | Kalender-Events |
 | `GET/POST` | `/integrations/git-activities/` | Git-Aktivitaeten |
+| `GET/POST` | `/integrations/repo-analyses/` | Repository-Analysen |
+| `POST` | `/integrations/repo-analyses/{id}/analyze/` | KI-Analyse eines Repos starten |
+| `POST` | `/integrations/repo-analyses/{id}/create-todos/` | Todos aus Repo-Analyse erstellen |
 | `GET` | `/integrations/microsoft/auth/` | Microsoft OAuth2 starten |
 | `GET` | `/integrations/microsoft/callback/` | Microsoft OAuth2 Callback |
 
@@ -232,8 +248,18 @@ Basis-URL: `/api/v1/`
 
 | Methode | Pfad | Beschreibung |
 |---|---|---|
-| `GET/POST` | `/ai/` | KI-Ergebnisse auflisten / erstellen |
-| `GET/PUT/PATCH/DELETE` | `/ai/{id}/` | KI-Ergebnis-CRUD |
+| `GET/PATCH` | `/ai/ai/provider/` | KI-Provider lesen / aendern |
+| `POST` | `/ai/ai/prioritize/` | Aufgaben priorisieren |
+| `POST` | `/ai/ai/summarize/` | Inhalte zusammenfassen |
+| `POST` | `/ai/ai/extract-actions/` | Action-Items extrahieren |
+| `POST` | `/ai/ai/daily-plan/` | Tagesplan-Vorschlag generieren |
+
+### Users
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `GET/PATCH` | `/users/me/` | Eigenes Profil lesen / aktualisieren |
+| `GET/PUT/PATCH` | `/users/{id}/` | Benutzer-CRUD |
 
 ### Notifications
 
@@ -273,6 +299,7 @@ User
  │
  ConfluencePage (standalone)
  GitActivity ──► Project, Issue
+ GitRepoAnalysis (standalone, KI-analysiert)
  AIResult (Cache)
  Label ◄──► Issue (M2M)
 ```
@@ -296,6 +323,7 @@ User
 | `ConfluencePage` | integrations | Importierte Confluence-Seite mit KI-Analyse |
 | `CalendarEvent` | integrations | Synchronisiertes Kalender-Event |
 | `GitActivity` | integrations | GitHub-Commit oder Pull Request |
+| `GitRepoAnalysis` | integrations | KI-analysiertes GitHub-Repository |
 | `AIResult` | ai | Gecachtes KI-Ergebnis |
 | `Notification` | notifications | Benutzer-Benachrichtigung |
 
@@ -319,12 +347,13 @@ User
 - **Client:** `ConfluenceClient` (REST API via `atlassian-python-api`)
 - **Service:** `ConfluenceSyncService` mit `sync_pages()`, `sync_inbound()`
 
-### GitHub (Inbound)
+### GitHub (Inbound + Repository-Analyse)
 
 - **Sync-Richtung:** Inbound
 - **Was wird synchronisiert:** Commits, Pull Requests
 - **Verknuepfung:** Automatische Zuordnung zu Issues anhand von Commit-Messages
-- **Client:** `GitHubClient` (REST API via `httpx`)
+- **Repository-Analyse:** Repos per KI analysieren (Tech-Stack, Staerken, Verbesserungen, Action-Items)
+- **Client:** `GitHubClient` (REST API via `httpx`) mit `get_repo()`, `get_readme()`, `get_languages()`, `get_contributors()`
 - **Service:** `GitHubSyncService` mit `sync_commits()`, `sync_pull_requests()`
 
 ### Microsoft 365 (Inbound, OAuth2)
@@ -335,7 +364,16 @@ User
 - **Client:** `GraphClient` (Microsoft Graph API)
 - **Service:** `MicrosoftSyncService` mit `sync_calendar()`
 
-### Claude AI
+### KI-Provider (Multi-Provider)
+
+Alle KI-Funktionen laufen ueber eine einheitliche Schnittstelle (`BaseAIClient`).
+Der aktive Provider kann in der GUI unter **Einstellungen > KI-Provider** gewaehlt werden.
+
+| Provider | Beschreibung | Konfiguration |
+|---|---|---|
+| **Claude (Anthropic)** | Leistungsstarke Cloud-KI | API-Key + Modellauswahl |
+| **Ollama (Lokal)** | Laeuft auf eigenem Rechner, keine Cloud | Server-URL + Modellname |
+| **OpenRouter** | Zugang zu 100+ Modellen ueber eine API | API-Key + Modellname |
 
 - **Funktionen:**
   - `prioritize_todos()` — Todos nach Wichtigkeit sortieren
@@ -343,8 +381,10 @@ User
   - `extract_action_items()` — Action-Items aus Text extrahieren
   - `suggest_daily_plan()` — KI-gestuetzten Tagesplan erstellen
   - `analyze_confluence_page()` — Confluence-Seite analysieren
-- **Client:** `ClaudeClient` mit `generate()` und `generate_json()`
-- **Caching:** Ergebnisse werden in `AIResult` gespeichert
+  - `analyze_github_repo()` — GitHub-Repository analysieren
+- **Client-Architektur:** `BaseAIClient` → `ClaudeClient` / `OllamaClient` / `OpenRouterClient`
+- **Factory:** `get_ai_client(user)` waehlt Provider aus User-Preferences (Fallback: `.env`)
+- **Caching:** Ergebnisse werden in `AIResult` gespeichert (24h TTL)
 
 ---
 
@@ -375,6 +415,7 @@ User
 | `async_extract_action_items` | Action-Items per KI extrahieren |
 | `async_suggest_daily_plan` | Tagesplan per KI vorschlagen |
 | `async_analyze_confluence_page` | Confluence-Seite per KI analysieren |
+| `analyze_github_repo_task` | GitHub-Repository abrufen und per KI analysieren |
 
 Alle Tasks haben `max_retries=3` und `default_retry_delay=60s`.
 
@@ -396,7 +437,9 @@ Alle Tasks haben `max_retries=3` und `default_retry_delay=60s`.
 | `/confluence` | Confluence — Seitensuche und KI-Analyse |
 | `/confluence/[id]` | Confluence-Detail — Einzelne Seite mit Analyse |
 | `/github` | GitHub — Commits und PRs nach Projekt/Typ gefiltert |
-| `/einstellungen` | Einstellungen — Integrationen verbinden und verwalten |
+| `/github/repos` | Repository-Analyse — Repos hinzufuegen und per KI analysieren |
+| `/github/repos/[id]` | Repository-Detail — Sprachen, KI-Analyse, Action-Items |
+| `/einstellungen` | Einstellungen — Profil, KI-Provider und Integrationen konfigurieren |
 
 ### Technologie-Details
 
@@ -500,7 +543,7 @@ Pm-tool/
 │   │   │   ├── confluence/         # Client, Sync-Service, Tasks
 │   │   │   ├── git/                # GitHub-Client, Sync-Service, Tasks
 │   │   │   └── microsoft/          # Graph-Client, Sync-Service, Tasks, OAuth2
-│   │   ├── ai/                     # Claude-Client, Services, Prompts, Tasks
+│   │   ├── ai/                     # Multi-Provider-Client, Services, Prompts, Tasks
 │   │   └── notifications/          # Benachrichtigungen, Deadline-Warnungen
 │   └── tests/
 │       ├── conftest.py             # Pytest-Fixtures
