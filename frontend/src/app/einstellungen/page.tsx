@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
 import { JiraConnectDialog } from "@/components/integrations/JiraConnectDialog";
+import { ConfluenceConnectDialog } from "@/components/integrations/ConfluenceConnectDialog";
+import { GitHubConnectDialog } from "@/components/integrations/GitHubConnectDialog";
 import { SyncStatusIndicator } from "@/components/integrations/SyncStatusIndicator";
 
 const integrationMeta: Record<
@@ -40,13 +42,28 @@ const integrationMeta: Record<
 
 const allIntegrationTypes = ["jira", "confluence", "microsoft_calendar", "github"];
 
+type DialogType = "jira" | "confluence" | "github" | "microsoft" | null;
+
 export default function EinstellungenPage() {
   const { data: integrations } = useIntegrations();
   const syncIntegration = useSyncIntegration();
-  const [showJiraConnect, setShowJiraConnect] = useState(false);
+  const [openDialog, setOpenDialog] = useState<DialogType>(null);
 
   const getIntegration = (type: string) =>
     integrations?.results?.find((i) => i.integration_type === type);
+
+  const handleConnect = (type: string) => {
+    if (type === "jira") setOpenDialog("jira");
+    else if (type === "confluence") setOpenDialog("confluence");
+    else if (type === "github") setOpenDialog("github");
+    else if (type === "microsoft_calendar") {
+      // Microsoft uses OAuth redirect
+      window.open(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/integrations/microsoft/auth/`,
+        "_blank"
+      );
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -106,9 +123,7 @@ export default function EinstellungenPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => {
-                          if (type === "jira") setShowJiraConnect(true);
-                        }}
+                        onClick={() => handleConnect(type)}
                       >
                         Verbinden
                       </Button>
@@ -135,10 +150,9 @@ export default function EinstellungenPage() {
         </div>
       </Card>
 
-      <JiraConnectDialog
-        open={showJiraConnect}
-        onClose={() => setShowJiraConnect(false)}
-      />
+      <JiraConnectDialog open={openDialog === "jira"} onClose={() => setOpenDialog(null)} />
+      <ConfluenceConnectDialog open={openDialog === "confluence"} onClose={() => setOpenDialog(null)} />
+      <GitHubConnectDialog open={openDialog === "github"} onClose={() => setOpenDialog(null)} />
     </div>
   );
 }

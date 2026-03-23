@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { BellIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  BellIcon,
+  ArrowPathIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline";
 import { useNotifications, useMarkNotificationRead } from "@/hooks/useNotifications";
 import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
+import { useAppStore } from "@/stores/useAppStore";
 
 export function Header() {
   const { data: notifications } = useNotifications();
@@ -12,6 +17,7 @@ export function Header() {
   const markRead = useMarkNotificationRead();
   const [showNotifications, setShowNotifications] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const { toggleSidebar } = useAppStore();
 
   const unreadCount = notifications?.count || 0;
 
@@ -29,13 +35,20 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900">
+    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <button
+          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden"
+          onClick={toggleSidebar}
+        >
+          <Bars3Icon className="h-5 w-5" />
+        </button>
+        <h1 className="text-base lg:text-lg font-semibold text-gray-900">
           Persönliches Projektmanagement
         </h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 lg:gap-4">
         <button
           className={`rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 ${
             syncing ? "animate-spin" : ""
@@ -62,38 +75,44 @@ export function Header() {
 
           {/* Notification Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border bg-white shadow-lg">
-              <div className="border-b px-4 py-3">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Benachrichtigungen
-                </h3>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifications?.results?.length ? (
-                  notifications.results.slice(0, 10).map((n) => (
-                    <div
-                      key={n.id}
-                      className="border-b border-gray-50 px-4 py-3 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => {
-                        markRead.mutate(n.id);
-                        setShowNotifications(false);
-                      }}
-                    >
-                      <p className="text-sm font-medium text-gray-900">
-                        {n.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                        {n.message}
-                      </p>
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowNotifications(false)}
+              />
+              <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border bg-white shadow-lg">
+                <div className="border-b px-4 py-3">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Benachrichtigungen
+                  </h3>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications?.results?.length ? (
+                    notifications.results.slice(0, 10).map((n) => (
+                      <div
+                        key={n.id}
+                        className="border-b border-gray-50 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          markRead.mutate(n.id);
+                          setShowNotifications(false);
+                        }}
+                      >
+                        <p className="text-sm font-medium text-gray-900">
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                          {n.message}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-sm text-gray-400">
+                      Keine neuen Benachrichtigungen
                     </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-sm text-gray-400">
-                    Keine neuen Benachrichtigungen
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from .microsoft.views import microsoft_auth_callback, microsoft_auth_start
 from .views import (
     CalendarEventViewSet,
     ConfluencePageViewSet,
@@ -18,4 +19,6 @@ router.register(r"git-activities", GitActivityViewSet, basename="git-activity")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("microsoft/auth/", microsoft_auth_start, name="microsoft-auth-start"),
+    path("microsoft/callback/", microsoft_auth_callback, name="microsoft-auth-callback"),
 ]
