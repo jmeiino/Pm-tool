@@ -135,13 +135,47 @@ AI_PROVIDERS = {
 }
 
 
-def get_ai_client() -> BaseAIClient:
-    """Erstellt den konfigurierten KI-Client basierend auf AI_PROVIDER Setting."""
-    provider = getattr(settings, "AI_PROVIDER", "claude").lower()
+def get_ai_client(user=None) -> BaseAIClient:
+    """Erstellt den KI-Client. Liest zuerst aus User.preferences, dann aus Settings."""
+    ai_prefs = {}
+    if user:
+        prefs = getattr(user, "preferences", {}) or {}
+        ai_prefs = prefs.get("ai", {})
+
+    provider = ai_prefs.get("provider", getattr(settings, "AI_PROVIDER", "claude")).lower()
     client_cls = AI_PROVIDERS.get(provider)
     if not client_cls:
         raise ValueError(
             f"Unbekannter KI-Provider: '{provider}'. "
             f"Verfuegbar: {', '.join(AI_PROVIDERS.keys())}"
         )
-    return client_cls()
+
+    client = client_cls.__new__(client_cls)
+
+    if provider == "claude":
+        import anthropic as _anthropic
+        api_key = ai_prefs.get("claude_api_key") or getattr(settings, "ANTHROPIC_API_KEY", "")
+        model = ai_prefs.get("claude_model") or getattr(settings, "ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+        client.client = _anthropic.Anthropic(api_key=api_key)
+        client.default_model = model
+    elif provider == "ollama":
+        base_url = ai_prefs.get("ollama_base_url") or getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434")
+        model = ai_prefs.get("ollama_model") or getattr(settings, "OLLAMA_MODEL", "llama3.1")
+        client.base_url = base_url
+        client.default_model = model
+        client.client = httpx.Client(base_url=base_url, timeout=120.0)
+    elif provider == "openrouter":
+        api_key = ai_prefs.get("openrouter_api_key") or getattr(settings, "OPENROUTER_API_KEY", "")
+        model = ai_prefs.get("openrouter_model") or getattr(settings, "OPENROUTER_MODEL", "anthropic/claude-sonnet-4")
+        client.default_model = model
+        client.client = httpx.Client(
+            base_url=OpenRouterClient.OPENROUTER_BASE,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": getattr(settings, "OPENROUTER_REFERER", "http://localhost:8000"),
+            },
+            timeout=120.0,
+        )
+
+    return client

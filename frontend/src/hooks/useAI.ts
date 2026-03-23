@@ -1,17 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-export interface AIProviderInfo {
+export interface AIProviderDetail {
   name: string;
   model: string;
-  configured: boolean;
+  api_key_set: boolean;
   base_url?: string;
 }
 
 export interface AIProviderResponse {
   active_provider: string;
   active_model: string;
-  providers: Record<string, AIProviderInfo>;
+  providers: Record<string, AIProviderDetail>;
+}
+
+export interface AISettingsUpdate {
+  active_provider?: string;
+  claude?: { api_key?: string; model?: string };
+  ollama?: { base_url?: string; model?: string };
+  openrouter?: { api_key?: string; model?: string };
 }
 
 export function useAIProvider() {
@@ -20,6 +27,22 @@ export function useAIProvider() {
     queryFn: async () => {
       const { data } = await api.get<AIProviderResponse>("/ai/ai/provider/");
       return data;
+    },
+  });
+}
+
+export function useUpdateAIProvider() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (update: AISettingsUpdate) => {
+      const { data } = await api.patch<AIProviderResponse>(
+        "/ai/ai/provider/",
+        update
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-provider"] });
     },
   });
 }
