@@ -176,4 +176,17 @@ MS_REDIRECT_URI = config("MS_REDIRECT_URI", default="http://localhost:8000/api/v
 
 GITHUB_TOKEN = config("GITHUB_TOKEN", default="")
 
+# AI Provider: "claude", "ollama" oder "openrouter"
+AI_PROVIDER = config("AI_PROVIDER", default="claude")
+
 ANTHROPIC_API_KEY = config("ANTHROPIC_API_KEY", default="")
+ANTHROPIC_MODEL = config("ANTHROPIC_MODEL", default="claude-sonnet-4-20250514")
+
+# Ollama (lokal)
+OLLAMA_BASE_URL = config("OLLAMA_BASE_URL", default="http://localhost:11434")
+OLLAMA_MODEL = config("OLLAMA_MODEL", default="llama3.1")
+
+# OpenRouter
+OPENROUTER_API_KEY = config("OPENROUTER_API_KEY", default="")
+OPENROUTER_MODEL = config("OPENROUTER_MODEL", default="anthropic/claude-sonnet-4")
+OPENROUTER_REFERER = config("OPENROUTER_REFERER", default="http://localhost:8000")

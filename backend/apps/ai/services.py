@@ -5,7 +5,7 @@ import logging
 from django.utils import timezone
 from datetime import timedelta
 
-from .client import ClaudeClient
+from .client import get_ai_client
 from .models import AIResult
 from .prompts import (
     CONFLUENCE_ANALYSIS_SYSTEM_PROMPT,
@@ -27,7 +27,7 @@ class AIService:
     CACHE_TTL_HOURS = 24
 
     def __init__(self):
-        self.client = ClaudeClient()
+        self.client = get_ai_client()
 
     def _compute_hash(self, content: str, result_type: str) -> str:
         """Berechnet einen Hash für den Cache-Schlüssel."""

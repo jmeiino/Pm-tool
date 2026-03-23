@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
+import { useAIProvider } from "@/hooks/useAI";
 import { JiraConnectDialog } from "@/components/integrations/JiraConnectDialog";
 import { ConfluenceConnectDialog } from "@/components/integrations/ConfluenceConnectDialog";
 import { GitHubConnectDialog } from "@/components/integrations/GitHubConnectDialog";
@@ -45,9 +46,28 @@ const allIntegrationTypes = ["jira", "confluence", "microsoft_calendar", "github
 
 type DialogType = "jira" | "confluence" | "github" | "microsoft" | null;
 
+const providerMeta: Record<string, { icon: string; color: string; description: string }> = {
+  claude: {
+    icon: "A",
+    color: "bg-amber-600",
+    description: "Anthropic Claude — leistungsstarke KI fuer komplexe Analysen",
+  },
+  ollama: {
+    icon: "O",
+    color: "bg-green-600",
+    description: "Lokale KI — laeuft auf deinem Rechner, keine Cloud noetig",
+  },
+  openrouter: {
+    icon: "R",
+    color: "bg-violet-600",
+    description: "OpenRouter — Zugang zu vielen Modellen ueber eine API",
+  },
+};
+
 export default function EinstellungenPage() {
   const { data: integrations } = useIntegrations();
   const syncIntegration = useSyncIntegration();
+  const { data: aiProvider } = useAIProvider();
   const [openDialog, setOpenDialog] = useState<DialogType>(null);
 
   const getIntegration = (type: string) =>
@@ -131,17 +151,85 @@ export default function EinstellungenPage() {
         </div>
       </Card>
 
-      <Card title="KI-Einstellungen">
+      <Card title="KI-Provider">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Claude API</p>
-              <p className="text-sm text-gray-500">
-                KI-gestützte Tagesplanung, Priorisierung und Zusammenfassungen
-              </p>
-            </div>
-            <Badge>API-Key erforderlich</Badge>
-          </div>
+          {aiProvider
+            ? Object.entries(aiProvider.providers).map(([key, info]) => {
+                const meta = providerMeta[key];
+                const isActive = aiProvider.active_provider === key;
+
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center justify-between rounded-lg border p-4 ${
+                      isActive
+                        ? "border-primary-200 bg-primary-50"
+                        : "border-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${meta?.color || "bg-gray-500"} text-white font-bold`}
+                      >
+                        {meta?.icon || key[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">
+                            {info.name}
+                          </p>
+                          {isActive && (
+                            <Badge variant="success">Aktiv</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          {meta?.description}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          Modell: {info.model}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {info.configured ? (
+                        <Badge variant="success">Konfiguriert</Badge>
+                      ) : (
+                        <Badge>Nicht konfiguriert</Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            : (
+              <div className="space-y-3">
+                {["claude", "ollama", "openrouter"].map((key) => {
+                  const meta = providerMeta[key];
+                  return (
+                    <div
+                      key={key}
+                      className="flex items-center gap-4 rounded-lg border border-gray-100 p-4"
+                    >
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${meta.color} text-white font-bold`}
+                      >
+                        {meta.icon}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{key}</p>
+                        <p className="text-sm text-gray-500">{meta.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          <p className="text-xs text-gray-400">
+            Der aktive Provider wird ueber die Umgebungsvariable{" "}
+            <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-gray-600">
+              AI_PROVIDER
+            </code>{" "}
+            konfiguriert.
+          </p>
         </div>
       </Card>
 
