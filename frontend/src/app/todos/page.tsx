@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useTodos, useUpdateTodo } from "@/hooks/useTodos";
+import { TodoCreateDialog } from "@/components/todos/TodoCreateDialog";
 import { priorityLabels, priorityColors, statusLabels, formatDate } from "@/lib/utils";
 import { PlusIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
@@ -17,6 +18,7 @@ const statusFilters = [
 
 export default function TodosPage() {
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [showCreate, setShowCreate] = useState(false);
   const filters = statusFilter ? { status: statusFilter } : {};
   const { data, isLoading } = useTodos(filters);
   const updateTodo = useUpdateTodo();
@@ -30,7 +32,7 @@ export default function TodosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Aufgaben</h2>
-        <Button>
+        <Button onClick={() => setShowCreate(true)}>
           <PlusIcon className="h-4 w-4" />
           Neue Aufgabe
         </Button>
@@ -109,6 +111,8 @@ export default function TodosPage() {
           <p className="text-gray-500">Keine Aufgaben gefunden.</p>
         )}
       </Card>
+
+      <TodoCreateDialog open={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   );
 }

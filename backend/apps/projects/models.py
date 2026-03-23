@@ -124,6 +124,12 @@ class Issue(TimeStampedModel):
         verbose_name_plural = "Issues"
         ordering = ["-updated_at"]
 
+    def save(self, *args, **kwargs):
+        if not self.key:
+            next_seq = Issue.objects.filter(project=self.project).count() + 1
+            self.key = f"{self.project.key}-{next_seq}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.key}: {self.title}"
 

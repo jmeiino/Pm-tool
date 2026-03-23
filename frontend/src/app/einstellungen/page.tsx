@@ -1,76 +1,123 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import Link from "next/link";
+import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
+import { JiraConnectDialog } from "@/components/integrations/JiraConnectDialog";
+import { SyncStatusIndicator } from "@/components/integrations/SyncStatusIndicator";
 
-const integrations = [
-  {
+const integrationMeta: Record<
+  string,
+  { name: string; description: string; icon: string; color: string }
+> = {
+  jira: {
     name: "Jira",
     description: "Bidirektionale Synchronisation von Projekten und Issues",
-    status: "nicht verbunden",
     icon: "J",
     color: "bg-blue-500",
   },
-  {
+  confluence: {
     name: "Confluence",
     description: "Seiten lesen, analysieren und erstellen",
-    status: "nicht verbunden",
     icon: "C",
     color: "bg-blue-400",
   },
-  {
+  microsoft_calendar: {
     name: "Microsoft 365",
     description: "Outlook Kalender, E-Mails, Teams und To-Do",
-    status: "nicht verbunden",
     icon: "M",
     color: "bg-orange-500",
   },
-  {
+  github: {
     name: "GitHub",
     description: "Commits, Pull Requests und Code-Aktivität",
-    status: "nicht verbunden",
     icon: "G",
     color: "bg-gray-800",
   },
-];
+};
+
+const allIntegrationTypes = ["jira", "confluence", "microsoft_calendar", "github"];
 
 export default function EinstellungenPage() {
+  const { data: integrations } = useIntegrations();
+  const syncIntegration = useSyncIntegration();
+  const [showJiraConnect, setShowJiraConnect] = useState(false);
+
+  const getIntegration = (type: string) =>
+    integrations?.results?.find((i) => i.integration_type === type);
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Einstellungen</h2>
 
       <Card title="Integrationen">
         <div className="space-y-4">
-          {integrations.map((integration) => (
-            <div
-              key={integration.name}
-              className="flex items-center justify-between rounded-lg border border-gray-100 p-4"
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${integration.color} text-white font-bold`}
-                >
-                  {integration.icon}
+          {allIntegrationTypes.map((type) => {
+            const meta = integrationMeta[type];
+            const integration = getIntegration(type);
+
+            if (!meta) return null;
+
+            return (
+              <div
+                key={type}
+                className="flex items-center justify-between rounded-lg border border-gray-100 p-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${meta.color} text-white font-bold`}
+                  >
+                    {meta.icon}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{meta.name}</p>
+                    <p className="text-sm text-gray-500">{meta.description}</p>
+                    {integration && (
+                      <SyncStatusIndicator
+                        status={integration.sync_status}
+                        lastSyncedAt={integration.last_synced_at}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {integration.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {integration.description}
-                  </p>
+                <div className="flex items-center gap-3">
+                  {integration ? (
+                    <>
+                      <Badge variant="success">Verbunden</Badge>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => syncIntegration.mutate(integration.id)}
+                        disabled={
+                          syncIntegration.isPending ||
+                          integration.sync_status === "syncing"
+                        }
+                      >
+                        {integration.sync_status === "syncing"
+                          ? "Synchronisiert..."
+                          : "Sync"}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Badge>Nicht verbunden</Badge>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          if (type === "jira") setShowJiraConnect(true);
+                        }}
+                      >
+                        Verbinden
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge>{integration.status}</Badge>
-                <Button variant="secondary" size="sm">
-                  Verbinden
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
 
@@ -87,6 +134,11 @@ export default function EinstellungenPage() {
           </div>
         </div>
       </Card>
+
+      <JiraConnectDialog
+        open={showJiraConnect}
+        onClose={() => setShowJiraConnect(false)}
+      />
     </div>
   );
 }

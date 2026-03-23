@@ -19,7 +19,19 @@ export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      await api.patch(`/notifications/${id}/`, { is_read: true });
+      await api.post(`/notifications/${id}/mark-read/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await api.post("/notifications/mark-all-read/");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

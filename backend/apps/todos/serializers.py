@@ -27,6 +27,17 @@ class DailyPlanItemSerializer(serializers.ModelSerializer):
         ]
 
 
+class DailyPlanItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyPlanItem
+        fields = [
+            "todo", "order", "scheduled_start", "time_block_minutes",
+        ]
+        extra_kwargs = {
+            "order": {"required": False},
+        }
+
+
 class DailyPlanSerializer(serializers.ModelSerializer):
     items = DailyPlanItemSerializer(many=True, read_only=True)
 

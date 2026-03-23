@@ -121,6 +121,9 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -149,6 +152,17 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    "poll-all-jira-integrations": {
+        "task": "apps.integrations.jira.tasks.poll_all_jira_integrations",
+        "schedule": 900.0,  # every 15 minutes
+    },
+    "check-deadline-warnings": {
+        "task": "apps.notifications.tasks.check_deadline_warnings",
+        "schedule": 3600.0,  # every hour
+    },
+}
 
 # External Services
 ATLASSIAN_URL = config("ATLASSIAN_URL", default="")

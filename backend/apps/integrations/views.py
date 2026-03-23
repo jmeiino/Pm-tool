@@ -1,4 +1,3 @@
-from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -44,8 +43,16 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
         integration.sync_status = IntegrationConfig.SyncStatus.SYNCING
         integration.save(update_fields=["sync_status", "updated_at"])
 
-        # TODO: Celery-Task für die jeweilige Integration auslösen
-        # z.B. poll_jira_updates.delay(integration.id)
+        # Dispatch to the appropriate Celery task
+        if integration.integration_type == IntegrationConfig.IntegrationType.JIRA:
+            from apps.integrations.jira.tasks import poll_jira_updates
+            poll_jira_updates.delay(integration.id)
+        elif integration.integration_type == IntegrationConfig.IntegrationType.CONFLUENCE:
+            from apps.integrations.confluence.tasks import poll_confluence_updates
+            poll_confluence_updates.delay(integration.id)
+        elif integration.integration_type == IntegrationConfig.IntegrationType.GITHUB:
+            from apps.integrations.git.tasks import poll_github_updates
+            poll_github_updates.delay(integration.id)
 
         return Response(
             {"detail": "Synchronisierung gestartet."},
@@ -81,12 +88,41 @@ class ConfluencePageViewSet(
         """KI-Analyse einer Confluence-Seite auslösen."""
         page = self.get_object()
 
-        # TODO: KI-Analyse als Celery-Task auslösen
-        # z.B. analyze_confluence_page.delay(page.id)
+        from apps.integrations.confluence.tasks import analyze_confluence_page_task
+        analyze_confluence_page_task.delay(page.id)
 
         return Response(
             {"detail": "KI-Analyse gestartet.", "page_id": page.id},
             status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="create-todos")
+    def create_todos(self, request, pk=None):
+        """Aufgaben aus Confluence-Aktionspunkten erstellen."""
+        page = self.get_object()
+
+        if not page.ai_action_items:
+            return Response(
+                {"detail": "Keine Aktionspunkte vorhanden. Bitte zuerst analysieren."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.todos.models import PersonalTodo
+        created_count = 0
+        for action_item in page.ai_action_items:
+            title = action_item if isinstance(action_item, str) else action_item.get("action", "")
+            if title:
+                PersonalTodo.objects.create(
+                    user=request.user,
+                    title=title,
+                    source=PersonalTodo.Source.CONFLUENCE,
+                    linked_confluence_page_id=page.confluence_page_id,
+                )
+                created_count += 1
+
+        return Response(
+            {"detail": f"{created_count} Aufgaben erstellt.", "count": created_count},
+            status=status.HTTP_201_CREATED,
         )
 
 
@@ -104,3 +140,16 @@ class CalendarEventViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         if end:
             qs = qs.filter(end_time__lte=end)
         return qs.order_by("start_time")
+
+
+class GitActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """Git-Aktivitäten anzeigen, filterbar nach Projekt."""
+
+    serializer_class = GitActivitySerializer
+
+    def get_queryset(self):
+        qs = GitActivity.objects.all()
+        project_id = self.request.query_params.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        return qs

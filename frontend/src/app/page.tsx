@@ -1,15 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useProjects } from "@/hooks/useProjects";
-import { useTodos } from "@/hooks/useTodos";
+import { useTodos, useDailyPlan, useUpdateTodo, useAiDailyPlanSuggestion } from "@/hooks/useTodos";
 import { useNotifications } from "@/hooks/useNotifications";
 import {
   priorityLabels,
   priorityColors,
-  statusLabels,
   formatDate,
 } from "@/lib/utils";
 import {
@@ -20,12 +20,20 @@ import {
   FolderIcon,
 } from "@heroicons/react/24/outline";
 
+function formatToday() {
+  return new Date().toISOString().split("T")[0];
+}
+
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { data: todos, isLoading: todosLoading } = useTodos({
     status: "pending",
   });
   const { data: notifications } = useNotifications();
+  const { data: dailyPlan } = useDailyPlan(formatToday());
+  const updateTodo = useUpdateTodo();
+  const aiSuggest = useAiDailyPlanSuggestion(formatToday());
 
   const today = new Date().toLocaleDateString("de-DE", {
     weekday: "long",
@@ -33,6 +41,21 @@ export default function DashboardPage() {
     month: "long",
     year: "numeric",
   });
+
+  const todayPlannedCount = dailyPlan?.items?.length || 0;
+
+  const handleCreateAIPlan = () => {
+    aiSuggest.mutate(undefined, {
+      onSuccess: () => {
+        router.push("/planung/tagesplan");
+      },
+    });
+  };
+
+  const handleToggleDone = (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === "done" ? "pending" : "done";
+    updateTodo.mutate({ id, status: newStatus });
+  };
 
   return (
     <div className="space-y-6">
@@ -42,9 +65,9 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
           <p className="text-sm text-gray-500">{today}</p>
         </div>
-        <Button>
+        <Button onClick={handleCreateAIPlan} disabled={aiSuggest.isPending}>
           <SparklesIcon className="h-4 w-4" />
-          KI-Tagesplan erstellen
+          {aiSuggest.isPending ? "KI plant..." : "KI-Tagesplan erstellen"}
         </Button>
       </div>
 
@@ -83,7 +106,9 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Heute geplant</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {todayPlannedCount}
+              </p>
             </div>
           </div>
         </Card>
@@ -114,10 +139,14 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
+                      checked={todo.status === "done"}
+                      onChange={() => handleToggleDone(todo.id, todo.status)}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600"
                     />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className={`text-sm font-medium ${
+                        todo.status === "done" ? "text-gray-400 line-through" : "text-gray-900"
+                      }`}>
                         {todo.title}
                       </p>
                       {todo.due_date && (
@@ -175,4 +204,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

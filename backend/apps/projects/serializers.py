@@ -44,6 +44,24 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ["author", "created_at", "updated_at"]
 
 
+class IssueCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Issue
+        fields = [
+            "id", "key", "project", "title", "description", "issue_type",
+            "priority", "assignee", "sprint", "parent",
+            "story_points", "due_date", "labels",
+        ]
+        read_only_fields = ["key"]
+
+    def create(self, validated_data):
+        labels = validated_data.pop("labels", [])
+        issue = Issue.objects.create(**validated_data)
+        if labels:
+            issue.labels.set(labels)
+        return issue
+
+
 class IssueListSerializer(serializers.ModelSerializer):
     project_key = serializers.CharField(source="project.key", read_only=True)
     assignee_name = serializers.CharField(source="assignee.__str__", read_only=True, default=None)

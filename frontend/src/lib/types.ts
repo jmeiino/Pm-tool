@@ -140,6 +140,48 @@ export interface Notification {
   created_at: string;
 }
 
+// Issue Detail (erweitertes Interface für Einzelansicht)
+export interface IssueDetail extends Issue {
+  description: string;
+  comments: Comment[];
+  labels: { id: number; name: string; color: string }[];
+  subtasks: Issue[];
+  parent: number | null;
+  reporter: number | null;
+  jira_issue_key: string | null;
+  jira_updated_at: string | null;
+  metadata: Record<string, unknown>;
+}
+
+// Project Statistics
+export interface ProjectStats {
+  total: number;
+  by_status: Record<string, number>;
+  by_type: Record<string, number>;
+  by_priority: Record<string, number>;
+  overdue_count: number;
+  sprint_info?: {
+    name: string;
+    start_date: string | null;
+    end_date: string | null;
+    total_issues: number;
+    done_issues: number;
+  };
+}
+
+// Git-Aktivitäten
+export interface GitActivity {
+  id: number;
+  project: number;
+  event_type: "commit" | "pr_opened" | "pr_merged" | "pr_closed";
+  event_type_display: string;
+  author: string;
+  title: string;
+  url: string;
+  event_date: string;
+  linked_issue: number | null;
+}
+
 // API Responses
 export interface PaginatedResponse<T> {
   count: number;

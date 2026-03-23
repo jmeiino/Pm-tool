@@ -1,4 +1,5 @@
-from django.db.models import Count
+from django.db.models import Count, Q
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,6 +7,7 @@ from rest_framework.response import Response
 from .models import Comment, Issue, Label, Project, Sprint
 from .serializers import (
     CommentSerializer,
+    IssueCreateSerializer,
     IssueDetailSerializer,
     IssueListSerializer,
     LabelSerializer,
@@ -30,7 +32,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def stats(self, request, pk=None):
         project = self.get_object()
         issues = project.issues.all()
-        return Response({
+        today = timezone.now().date()
+        active_sprint = project.sprints.filter(status=Sprint.Status.ACTIVE).first()
+
+        stats = {
             "total": issues.count(),
             "by_status": dict(
                 issues.values_list("status").annotate(count=Count("id")).values_list("status", "count")
@@ -38,7 +43,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
             "by_type": dict(
                 issues.values_list("issue_type").annotate(count=Count("id")).values_list("issue_type", "count")
             ),
-        })
+            "by_priority": dict(
+                issues.values_list("priority").annotate(count=Count("id")).values_list("priority", "count")
+            ),
+            "overdue_count": issues.filter(due_date__lt=today, status__in=["to_do", "in_progress"]).count(),
+        }
+
+        if active_sprint:
+            sprint_issues = issues.filter(sprint=active_sprint)
+            stats["sprint_info"] = {
+                "name": active_sprint.name,
+                "start_date": active_sprint.start_date,
+                "end_date": active_sprint.end_date,
+                "total_issues": sprint_issues.count(),
+                "done_issues": sprint_issues.filter(status="done").count(),
+            }
+
+        return Response(stats)
 
 
 class SprintViewSet(viewsets.ModelViewSet):
@@ -62,12 +83,28 @@ class IssueViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return IssueDetailSerializer
+        if self.action in ("create", "update", "partial_update"):
+            return IssueCreateSerializer
         return IssueListSerializer
 
     def get_queryset(self):
-        return Issue.objects.select_related("project", "assignee", "sprint").prefetch_related(
+        return Issue.objects.select_related("project", "assignee", "sprint", "reporter").prefetch_related(
             "labels", "comments", "subtasks"
         )
+
+    def perform_create(self, serializer):
+        serializer.save(reporter=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def transition(self, request, pk=None):
+        """Status eines Issues ändern."""
+        issue = self.get_object()
+        new_status = request.data.get("status")
+        if not new_status:
+            return Response({"detail": "Status ist erforderlich."}, status=400)
+        issue.status = new_status
+        issue.save(update_fields=["status", "updated_at"])
+        return Response(IssueDetailSerializer(issue).data)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
