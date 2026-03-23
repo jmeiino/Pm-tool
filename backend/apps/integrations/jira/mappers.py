@@ -2,7 +2,6 @@
 
 from apps.projects.models import Issue
 
-
 JIRA_PRIORITY_MAP = {
     "Highest": Issue.Priority.HIGHEST,
     "High": Issue.Priority.HIGH,
@@ -55,8 +54,8 @@ def jira_issue_to_local(jira_data: dict, project) -> dict:
     """Map Jira issue data to local Issue model fields."""
     fields = jira_data.get("fields", {})
 
-    assignee = fields.get("assignee")
-    reporter = fields.get("reporter")
+    _assignee = fields.get("assignee")  # noqa: F841 — reserved for future user-matching
+    _reporter = fields.get("reporter")  # noqa: F841 — reserved for future user-matching
 
     return {
         "project": project,
@@ -65,12 +64,8 @@ def jira_issue_to_local(jira_data: dict, project) -> dict:
         "issue_type": jira_issue_type_to_local(
             fields.get("issuetype", {}).get("name") if fields.get("issuetype") else None
         ),
-        "status": jira_status_to_local(
-            fields.get("status", {}).get("name") if fields.get("status") else None
-        ),
-        "priority": jira_priority_to_local(
-            fields.get("priority", {}).get("name") if fields.get("priority") else None
-        ),
+        "status": jira_status_to_local(fields.get("status", {}).get("name") if fields.get("status") else None),
+        "priority": jira_priority_to_local(fields.get("priority", {}).get("name") if fields.get("priority") else None),
         "story_points": fields.get("story_points") or fields.get("customfield_10016"),
         "due_date": fields.get("duedate"),
         "jira_issue_id": jira_data.get("id"),

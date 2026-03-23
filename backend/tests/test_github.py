@@ -2,7 +2,7 @@ import pytest
 from django.utils import timezone
 
 from apps.integrations.models import GitActivity, IntegrationConfig
-from tests.factories import ProjectFactory, UserFactory
+from tests.factories import ProjectFactory
 
 
 @pytest.mark.django_db
@@ -53,9 +53,7 @@ class TestGitActivityAPI:
             event_date=timezone.now(),
         )
 
-        response = api_client.get(
-            f"/api/v1/integrations/git-activities/?project={project.id}"
-        )
+        response = api_client.get(f"/api/v1/integrations/git-activities/?project={project.id}")
         assert response.status_code == 200
         assert response.data["count"] == 1
         assert response.data["results"][0]["title"] == "In my project"
@@ -112,9 +110,7 @@ class TestGitHubSyncDispatch:
             sync_status=IntegrationConfig.SyncStatus.IDLE,
         )
 
-        response = api_client.post(
-            f"/api/v1/integrations/configs/{integration.id}/sync/"
-        )
+        response = api_client.post(f"/api/v1/integrations/configs/{integration.id}/sync/")
         assert response.status_code == 202
         integration.refresh_from_db()
         assert integration.sync_status == "syncing"

@@ -22,9 +22,7 @@ class ConfluenceClient:
     def get_spaces(self) -> list[dict]:
         """Alle verfügbaren Spaces abrufen."""
         try:
-            result = self.confluence.get_all_spaces(
-                start=0, limit=50, expand="description.plain"
-            )
+            result = self.confluence.get_all_spaces(start=0, limit=50, expand="description.plain")
             return result.get("results", [])
         except Exception:
             logger.exception("Fehler beim Abrufen der Confluence-Spaces")
@@ -44,9 +42,7 @@ class ConfluenceClient:
     def get_page_content(self, page_id: str) -> dict:
         """Inhalt einer einzelnen Seite abrufen."""
         try:
-            page = self.confluence.get_page_by_id(
-                page_id, expand="body.storage,version"
-            )
+            page = self.confluence.get_page_by_id(page_id, expand="body.storage,version")
             # Strip HTML tags for plain text
             html = page.get("body", {}).get("storage", {}).get("value", "")
             plain = self._html_to_text(html)
@@ -56,14 +52,10 @@ class ConfluenceClient:
             logger.exception("Fehler beim Abrufen der Seite %s", page_id)
             raise
 
-    def create_page(
-        self, space_key: str, title: str, body: str, parent_id: str | None = None
-    ) -> dict:
+    def create_page(self, space_key: str, title: str, body: str, parent_id: str | None = None) -> dict:
         """Neue Seite in Confluence erstellen."""
         try:
-            return self.confluence.create_page(
-                space_key, title, body, parent_id=parent_id, type="page"
-            )
+            return self.confluence.create_page(space_key, title, body, parent_id=parent_id, type="page")
         except Exception:
             logger.exception("Fehler beim Erstellen der Confluence-Seite")
             raise
@@ -71,11 +63,8 @@ class ConfluenceClient:
     def update_page(self, page_id: str, title: str, body: str) -> dict:
         """Bestehende Seite aktualisieren."""
         try:
-            current = self.confluence.get_page_by_id(page_id, expand="version")
-            version = current.get("version", {}).get("number", 1)
-            return self.confluence.update_page(
-                page_id, title, body, minor_edit=False
-            )
+            self.confluence.get_page_by_id(page_id, expand="version")
+            return self.confluence.update_page(page_id, title, body, minor_edit=False)
         except Exception:
             logger.exception("Fehler beim Aktualisieren der Seite %s", page_id)
             raise

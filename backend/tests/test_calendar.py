@@ -55,9 +55,7 @@ class TestCalendarEventAPI:
 
         start = now.isoformat()
         end = (now + timezone.timedelta(days=7)).isoformat()
-        response = api_client.get(
-            f"/api/v1/integrations/calendar-events/?start={start}&end={end}"
-        )
+        response = api_client.get(f"/api/v1/integrations/calendar-events/?start={start}&end={end}")
         assert response.status_code == 200
         assert response.data["count"] == 1
         assert response.data["results"][0]["title"] == "Future Event"
@@ -73,13 +71,9 @@ class TestMicrosoftSyncDispatch:
             credentials={"access_token": "test"},
             sync_status=IntegrationConfig.SyncStatus.IDLE,
         )
-        with pytest.raises(Exception):
-            # Task will fail because no real MS credentials, but the dispatch path is exercised
-            pass
+        # Task will fail because no real MS credentials, but the dispatch path is exercised
 
-        response = api_client.post(
-            f"/api/v1/integrations/configs/{integration.id}/sync/"
-        )
+        response = api_client.post(f"/api/v1/integrations/configs/{integration.id}/sync/")
         assert response.status_code == 202
         integration.refresh_from_db()
         assert integration.sync_status == "syncing"

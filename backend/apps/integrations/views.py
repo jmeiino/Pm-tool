@@ -47,15 +47,19 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
         # Dispatch to the appropriate Celery task
         if integration.integration_type == IntegrationConfig.IntegrationType.JIRA:
             from apps.integrations.jira.tasks import poll_jira_updates
+
             poll_jira_updates.delay(integration.id)
         elif integration.integration_type == IntegrationConfig.IntegrationType.CONFLUENCE:
             from apps.integrations.confluence.tasks import poll_confluence_updates
+
             poll_confluence_updates.delay(integration.id)
         elif integration.integration_type == IntegrationConfig.IntegrationType.GITHUB:
             from apps.integrations.git.tasks import poll_github_updates
+
             poll_github_updates.delay(integration.id)
         elif integration.integration_type == IntegrationConfig.IntegrationType.MICROSOFT_CALENDAR:
             from apps.integrations.microsoft.tasks import poll_microsoft_calendar
+
             poll_microsoft_calendar.delay(integration.id)
 
         return Response(
@@ -77,9 +81,7 @@ class SyncLogViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return qs
 
 
-class ConfluencePageViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
-):
+class ConfluencePageViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """Confluence-Seiten anzeigen und KI-Analyse auslösen."""
 
     serializer_class = ConfluencePageSerializer
@@ -93,6 +95,7 @@ class ConfluencePageViewSet(
         page = self.get_object()
 
         from apps.integrations.confluence.tasks import analyze_confluence_page_task
+
         analyze_confluence_page_task.delay(page.id)
 
         return Response(
@@ -112,6 +115,7 @@ class ConfluencePageViewSet(
             )
 
         from apps.todos.models import PersonalTodo
+
         created_count = 0
         for action_item in page.ai_action_items:
             title = action_item if isinstance(action_item, str) else action_item.get("action", "")
@@ -159,6 +163,7 @@ class GitRepoAnalysisViewSet(viewsets.ModelViewSet):
         repo = self.get_object()
 
         from apps.integrations.git.tasks import analyze_github_repo_task
+
         analyze_github_repo_task.delay(repo.id)
 
         return Response(
@@ -178,6 +183,7 @@ class GitRepoAnalysisViewSet(viewsets.ModelViewSet):
             )
 
         from apps.todos.models import PersonalTodo
+
         created_count = 0
         for item in repo.ai_action_items:
             title = item if isinstance(item, str) else item.get("action", "")

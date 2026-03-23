@@ -4,12 +4,8 @@ from .models import CalendarEvent, ConfluencePage, GitActivity, GitRepoAnalysis,
 
 
 class IntegrationConfigSerializer(serializers.ModelSerializer):
-    integration_type_display = serializers.CharField(
-        source="get_integration_type_display", read_only=True
-    )
-    sync_status_display = serializers.CharField(
-        source="get_sync_status_display", read_only=True
-    )
+    integration_type_display = serializers.CharField(source="get_integration_type_display", read_only=True)
+    sync_status_display = serializers.CharField(source="get_sync_status_display", read_only=True)
 
     class Meta:
         model = IntegrationConfig
@@ -33,12 +29,8 @@ class IntegrationConfigSerializer(serializers.ModelSerializer):
 
 
 class SyncLogSerializer(serializers.ModelSerializer):
-    direction_display = serializers.CharField(
-        source="get_direction_display", read_only=True
-    )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    direction_display = serializers.CharField(source="get_direction_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = SyncLog
@@ -156,9 +148,7 @@ class GitRepoAnalysisSerializer(serializers.ModelSerializer):
 
 
 class GitActivitySerializer(serializers.ModelSerializer):
-    event_type_display = serializers.CharField(
-        source="get_event_type_display", read_only=True
-    )
+    event_type_display = serializers.CharField(source="get_event_type_display", read_only=True)
 
     class Meta:
         model = GitActivity

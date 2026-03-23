@@ -1,9 +1,9 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from django.utils import timezone
 
 from apps.integrations.models import CalendarEvent, IntegrationConfig
-from tests.factories import UserFactory
 
 
 @pytest.mark.django_db

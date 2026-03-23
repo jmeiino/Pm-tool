@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []
@@ -155,9 +154,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_synced",
-                    models.BooleanField(
-                        default=False, help_text="Wird mit Jira synchronisiert"
-                    ),
+                    models.BooleanField(default=False, help_text="Wird mit Jira synchronisiert"),
                 ),
                 (
                     "jira_project_key",

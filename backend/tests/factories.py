@@ -1,9 +1,9 @@
 import factory
 from django.utils import timezone
 
-from apps.users.models import User
 from apps.projects.models import Comment, Issue, Label, Project, Sprint
-from apps.todos.models import DailyPlan, DailyPlanItem, PersonalTodo
+from apps.todos.models import DailyPlan, PersonalTodo
+from apps.users.models import User
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -50,7 +50,9 @@ class IssueFactory(factory.django.DjangoModelFactory):
 
     project = factory.SubFactory(ProjectFactory)
     title = factory.Sequence(lambda n: f"Issue {n}")
-    key = factory.LazyAttribute(lambda obj: f"{obj.project.key}-{Issue.objects.filter(project=obj.project).count() + 1}")
+    key = factory.LazyAttribute(
+        lambda obj: f"{obj.project.key}-{Issue.objects.filter(project=obj.project).count() + 1}"
+    )
     issue_type = Issue.IssueType.TASK
     priority = Issue.Priority.MEDIUM
 

@@ -6,9 +6,7 @@ class User(AbstractUser):
     """Erweitertes User-Model mit Präferenzen für das PM-Tool."""
 
     timezone = models.CharField(max_length=50, default="Europe/Berlin")
-    daily_capacity_hours = models.DecimalField(
-        max_digits=4, decimal_places=2, default=8.00
-    )
+    daily_capacity_hours = models.DecimalField(max_digits=4, decimal_places=2, default=8.00)
     preferences = models.JSONField(
         default=dict,
         blank=True,

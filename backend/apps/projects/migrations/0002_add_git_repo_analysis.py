@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -69,9 +68,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="issue",
             name="labels",
-            field=models.ManyToManyField(
-                blank=True, related_name="issues", to="projects.label"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="issues", to="projects.label"),
         ),
         migrations.AddField(
             model_name="project",

@@ -26,9 +26,7 @@ class Project(TimeStampedModel):
     name = models.CharField(max_length=255)
     key = models.CharField(max_length=20, unique=True)
     description = models.TextField(blank=True)
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_projects"
-    )
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_projects")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
     is_synced = models.BooleanField(default=False, help_text="Wird mit Jira synchronisiert")
     jira_project_key = models.CharField(max_length=20, null=True, blank=True, unique=True)
@@ -83,20 +81,14 @@ class Issue(TimeStampedModel):
         LOWEST = "lowest", "Niedrigste"
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="issues")
-    sprint = models.ForeignKey(
-        Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="issues"
-    )
-    parent = models.ForeignKey(
-        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="subtasks"
-    )
+    sprint = models.ForeignKey(Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="issues")
+    parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="subtasks")
     key = models.CharField(max_length=30, unique=True)
     title = models.CharField(max_length=500)
     description = models.TextField(blank=True)
     issue_type = models.CharField(max_length=20, choices=IssueType.choices, default=IssueType.TASK)
     status = models.CharField(max_length=50, default="to_do")
-    priority = models.CharField(
-        max_length=20, choices=Priority.choices, default=Priority.MEDIUM
-    )
+    priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.MEDIUM)
     assignee = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -136,9 +128,7 @@ class Issue(TimeStampedModel):
 
 class Comment(TimeStampedModel):
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name="comments")
-    author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
-    )
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
     body = models.TextField()
     jira_comment_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
 

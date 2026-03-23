@@ -22,6 +22,7 @@ def poll_github_updates(self, integration_id: int):
 
     try:
         from .sync import GitHubSyncService
+
         sync_service = GitHubSyncService(integration)
         sync_service.sync_inbound()
 
@@ -45,8 +46,8 @@ def poll_github_updates(self, integration_id: int):
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
 def analyze_github_repo_task(self, repo_analysis_id: int):
     """Repository-Daten von GitHub abrufen und per KI analysieren."""
-    from apps.integrations.models import GitRepoAnalysis, IntegrationConfig
     from apps.ai.services import AIService
+    from apps.integrations.models import GitRepoAnalysis, IntegrationConfig
 
     try:
         repo = GitRepoAnalysis.objects.get(id=repo_analysis_id)

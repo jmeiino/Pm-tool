@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -67,16 +66,14 @@ class NotificationService:
             ).exists()
 
             if not already_warned:
-                days_remaining = (todo.due_date - now.date()).days if hasattr(todo.due_date, "year") else (todo.due_date - now).days
-                severity = (
-                    Notification.Severity.URGENT
-                    if days_remaining <= 1
-                    else Notification.Severity.WARNING
+                days_remaining = (
+                    (todo.due_date - now.date()).days if hasattr(todo.due_date, "year") else (todo.due_date - now).days
                 )
+                severity = Notification.Severity.URGENT if days_remaining <= 1 else Notification.Severity.WARNING
                 NotificationService.create_notification(
                     user=todo.user,
                     title=f"Fristwarnung: {todo.title}",
-                    message=f"Die Aufgabe \"{todo.title}\" ist in {days_remaining} Tag(en) faellig.",
+                    message=f'Die Aufgabe "{todo.title}" ist in {days_remaining} Tag(en) faellig.',
                     notification_type=Notification.NotificationType.DEADLINE_WARNING,
                     severity=severity,
                     metadata={"todo_id": todo.id},

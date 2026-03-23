@@ -1,5 +1,6 @@
+from datetime import date
+
 import pytest
-from datetime import date, timedelta
 
 from tests.factories import DailyPlanFactory, PersonalTodoFactory, UserFactory
 
@@ -7,11 +8,14 @@ from tests.factories import DailyPlanFactory, PersonalTodoFactory, UserFactory
 @pytest.mark.django_db
 class TestTodoAPI:
     def test_create_todo(self, api_client, user):
-        response = api_client.post("/api/v1/todos/", {
-            "title": "Neue Aufgabe",
-            "priority": 2,
-            "description": "Beschreibung",
-        })
+        response = api_client.post(
+            "/api/v1/todos/",
+            {
+                "title": "Neue Aufgabe",
+                "priority": 2,
+                "description": "Beschreibung",
+            },
+        )
         assert response.status_code == 201
         assert response.data["title"] == "Neue Aufgabe"
         assert response.data["priority"] == 2
@@ -39,9 +43,12 @@ class TestTodoAPI:
     def test_update_todo_status(self, api_client, user):
         todo = PersonalTodoFactory(user=user, status="pending")
 
-        response = api_client.patch(f"/api/v1/todos/{todo.id}/", {
-            "status": "done",
-        })
+        response = api_client.patch(
+            f"/api/v1/todos/{todo.id}/",
+            {
+                "status": "done",
+            },
+        )
         assert response.status_code == 200
         assert response.data["status"] == "done"
 
@@ -65,9 +72,12 @@ class TestTodoAPI:
 class TestDailyPlanAPI:
     def test_create_daily_plan(self, api_client, user):
         today = date.today().isoformat()
-        response = api_client.post("/api/v1/daily-plans/", {
-            "date": today,
-        })
+        response = api_client.post(
+            "/api/v1/daily-plans/",
+            {
+                "date": today,
+            },
+        )
         assert response.status_code == 201
         assert response.data["date"] == today
 
@@ -91,6 +101,7 @@ class TestDailyPlanAPI:
 
     def test_remove_item_from_daily_plan(self, api_client, user):
         from apps.todos.models import DailyPlanItem
+
         plan = DailyPlanFactory(user=user)
         todo = PersonalTodoFactory(user=user)
         item = DailyPlanItem.objects.create(daily_plan=plan, todo=todo, order=0)
@@ -104,6 +115,7 @@ class TestDailyPlanAPI:
 
     def test_reorder_daily_plan(self, api_client, user):
         from apps.todos.models import DailyPlanItem
+
         plan = DailyPlanFactory(user=user)
         todo1 = PersonalTodoFactory(user=user)
         todo2 = PersonalTodoFactory(user=user)

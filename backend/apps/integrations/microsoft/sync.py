@@ -1,8 +1,8 @@
 import logging
 
+from dateutil import parser as dateparser
 from django.conf import settings
 from django.utils import timezone
-from dateutil import parser as dateparser
 
 from apps.integrations.models import CalendarEvent, IntegrationConfig, SyncLog
 
@@ -39,18 +39,27 @@ class MicrosoftSyncService:
             end = event_data.get("end", {})
             is_all_day = event_data.get("isAllDay", False)
 
-            start_time = dateparser.isoparse(
-                start.get("dateTime", "") + "Z" if not start.get("dateTime", "").endswith("Z") else start.get("dateTime", "")
-            ) if start.get("dateTime") else timezone.now()
+            start_time = (
+                dateparser.isoparse(
+                    start.get("dateTime", "") + "Z"
+                    if not start.get("dateTime", "").endswith("Z")
+                    else start.get("dateTime", "")
+                )
+                if start.get("dateTime")
+                else timezone.now()
+            )
 
-            end_time = dateparser.isoparse(
-                end.get("dateTime", "") + "Z" if not end.get("dateTime", "").endswith("Z") else end.get("dateTime", "")
-            ) if end.get("dateTime") else start_time
+            end_time = (
+                dateparser.isoparse(
+                    end.get("dateTime", "") + "Z"
+                    if not end.get("dateTime", "").endswith("Z")
+                    else end.get("dateTime", "")
+                )
+                if end.get("dateTime")
+                else start_time
+            )
 
-            attendees = [
-                a.get("emailAddress", {}).get("address", "")
-                for a in event_data.get("attendees", [])
-            ]
+            attendees = [a.get("emailAddress", {}).get("address", "") for a in event_data.get("attendees", [])]
 
             _, created = CalendarEvent.objects.update_or_create(
                 user=self.integration.user,

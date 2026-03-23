@@ -1,5 +1,4 @@
 import logging
-import secrets
 
 import httpx
 import msal
@@ -48,9 +47,7 @@ class GraphClient:
 
     def refresh_token(self, refresh_token_val: str, scopes: list[str]) -> dict:
         """Access-Token mit Refresh-Token erneuern."""
-        result = self.app.acquire_token_by_refresh_token(
-            refresh_token_val, scopes
-        )
+        result = self.app.acquire_token_by_refresh_token(refresh_token_val, scopes)
         if "access_token" in result:
             self._access_token = result["access_token"]
         return result

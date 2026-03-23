@@ -3,7 +3,7 @@ import logging
 from django.utils import timezone
 
 from apps.integrations.models import IntegrationConfig, SyncLog
-from apps.projects.models import Issue, Project, Sprint
+from apps.projects.models import Issue, Project
 
 from .client import JiraClient
 from .mappers import jira_issue_to_local, local_issue_to_jira
@@ -156,9 +156,7 @@ class JiraSyncService:
             for issue in new_issues:
                 try:
                     fields = local_issue_to_jira(issue)
-                    result = self.client.create_issue(
-                        issue.project.jira_project_key, fields
-                    )
+                    result = self.client.create_issue(issue.project.jira_project_key, fields)
                     issue.jira_issue_id = result.get("id")
                     issue.jira_issue_key = result.get("key")
                     issue.save(update_fields=["jira_issue_id", "jira_issue_key", "updated_at"])
@@ -212,17 +210,20 @@ class JiraSyncService:
                 # If Jira was also updated since last sync, there's a potential conflict
                 if jira_updated and issue.jira_updated_at:
                     from dateutil import parser
+
                     jira_dt = parser.isoparse(jira_updated)
                     if jira_dt > self.integration.last_synced_at:
                         # Check field-by-field
                         if fields.get("summary", "") != issue.title:
-                            conflicts.append({
-                                "issue_key": issue.key,
-                                "field": "title",
-                                "local_value": issue.title,
-                                "remote_value": fields.get("summary", ""),
-                                "suggestion": "keep_local",
-                            })
+                            conflicts.append(
+                                {
+                                    "issue_key": issue.key,
+                                    "field": "title",
+                                    "local_value": issue.title,
+                                    "remote_value": fields.get("summary", ""),
+                                    "suggestion": "keep_local",
+                                }
+                            )
             except Exception:
                 logger.exception("Fehler bei Konflikterkennung für %s", issue.key)
 

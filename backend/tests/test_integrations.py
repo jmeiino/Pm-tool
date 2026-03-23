@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import patch, MagicMock
 
 from apps.integrations.jira.mappers import (
     jira_issue_to_local,
@@ -7,7 +6,7 @@ from apps.integrations.jira.mappers import (
     jira_status_to_local,
     local_issue_to_jira,
 )
-from tests.factories import IssueFactory, ProjectFactory, UserFactory
+from tests.factories import IssueFactory, ProjectFactory
 
 
 @pytest.mark.django_db
@@ -66,11 +65,15 @@ class TestJiraMappers:
 @pytest.mark.django_db
 class TestIntegrationConfigAPI:
     def test_create_integration(self, api_client, user):
-        response = api_client.post("/api/v1/integrations/configs/", {
-            "integration_type": "jira",
-            "credentials": {"url": "https://test.atlassian.net", "email": "test@test.de", "api_token": "secret"},
-            "is_enabled": True,
-        }, format="json")
+        response = api_client.post(
+            "/api/v1/integrations/configs/",
+            {
+                "integration_type": "jira",
+                "credentials": {"url": "https://test.atlassian.net", "email": "test@test.de", "api_token": "secret"},
+                "is_enabled": True,
+            },
+            format="json",
+        )
         assert response.status_code == 201
         assert response.data["integration_type"] == "jira"
 
@@ -80,6 +83,7 @@ class TestIntegrationConfigAPI:
 
     def test_sync_disabled_integration(self, api_client, user):
         from apps.integrations.models import IntegrationConfig
+
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="jira",
@@ -91,6 +95,7 @@ class TestIntegrationConfigAPI:
 
     def test_sync_already_syncing(self, api_client, user):
         from apps.integrations.models import IntegrationConfig
+
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="jira",
@@ -106,6 +111,7 @@ class TestIntegrationConfigAPI:
 class TestNotificationAPI:
     def test_list_notifications(self, api_client, user):
         from apps.notifications.models import Notification
+
         Notification.objects.create(
             user=user,
             title="Test",
@@ -119,6 +125,7 @@ class TestNotificationAPI:
 
     def test_mark_notification_read(self, api_client, user):
         from apps.notifications.models import Notification
+
         notification = Notification.objects.create(
             user=user,
             title="Test",
@@ -127,9 +134,7 @@ class TestNotificationAPI:
             is_read=False,
         )
 
-        response = api_client.post(
-            f"/api/v1/notifications/{notification.id}/mark-read/"
-        )
+        response = api_client.post(f"/api/v1/notifications/{notification.id}/mark-read/")
         assert response.status_code == 200
 
         notification.refresh_from_db()
@@ -137,6 +142,7 @@ class TestNotificationAPI:
 
     def test_mark_all_read(self, api_client, user):
         from apps.notifications.models import Notification
+
         Notification.objects.create(user=user, title="T1", message="M1", notification_type="general")
         Notification.objects.create(user=user, title="T2", message="M2", notification_type="general")
 

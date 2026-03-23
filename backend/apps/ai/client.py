@@ -145,15 +145,13 @@ def get_ai_client(user=None) -> BaseAIClient:
     provider = ai_prefs.get("provider", getattr(settings, "AI_PROVIDER", "claude")).lower()
     client_cls = AI_PROVIDERS.get(provider)
     if not client_cls:
-        raise ValueError(
-            f"Unbekannter KI-Provider: '{provider}'. "
-            f"Verfuegbar: {', '.join(AI_PROVIDERS.keys())}"
-        )
+        raise ValueError(f"Unbekannter KI-Provider: '{provider}'. Verfuegbar: {', '.join(AI_PROVIDERS.keys())}")
 
     client = client_cls.__new__(client_cls)
 
     if provider == "claude":
         import anthropic as _anthropic
+
         api_key = ai_prefs.get("claude_api_key") or getattr(settings, "ANTHROPIC_API_KEY", "")
         model = ai_prefs.get("claude_model") or getattr(settings, "ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
         client.client = _anthropic.Anthropic(api_key=api_key)

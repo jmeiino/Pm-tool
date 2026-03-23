@@ -7,9 +7,16 @@ class AIResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = AIResult
         fields = [
-            "id", "content_hash", "result_type", "input_preview",
-            "result", "model_used", "tokens_used", "expires_at",
-            "created_at", "updated_at",
+            "id",
+            "content_hash",
+            "result_type",
+            "input_preview",
+            "result",
+            "model_used",
+            "tokens_used",
+            "expires_at",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 
@@ -29,9 +36,7 @@ class ExtractActionsRequestSerializer(serializers.Serializer):
 
 class DailyPlanRequestSerializer(serializers.Serializer):
     todos = serializers.ListField(child=serializers.DictField(), help_text="Liste der Aufgaben")
-    calendar_events = serializers.ListField(
-        child=serializers.DictField(), default=list, help_text="Kalendereinträge"
-    )
+    calendar_events = serializers.ListField(child=serializers.DictField(), default=list, help_text="Kalendereinträge")
     capacity_hours = serializers.FloatField(default=8.0, help_text="Verfügbare Stunden")
 
 

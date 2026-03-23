@@ -28,12 +28,16 @@ def _get_ai_prefs(user):
             "model": ai.get("claude_model", getattr(django_settings, "ANTHROPIC_MODEL", "claude-sonnet-4-20250514")),
         },
         "ollama": {
-            "base_url": ai.get("ollama_base_url", getattr(django_settings, "OLLAMA_BASE_URL", "http://localhost:11434")),
+            "base_url": ai.get(
+                "ollama_base_url", getattr(django_settings, "OLLAMA_BASE_URL", "http://localhost:11434")
+            ),
             "model": ai.get("ollama_model", getattr(django_settings, "OLLAMA_MODEL", "llama3.1")),
         },
         "openrouter": {
             "api_key": ai.get("openrouter_api_key", getattr(django_settings, "OPENROUTER_API_KEY", "")),
-            "model": ai.get("openrouter_model", getattr(django_settings, "OPENROUTER_MODEL", "anthropic/claude-sonnet-4")),
+            "model": ai.get(
+                "openrouter_model", getattr(django_settings, "OPENROUTER_MODEL", "anthropic/claude-sonnet-4")
+            ),
         },
     }
 
@@ -147,25 +151,27 @@ class AIViewSet(viewsets.ViewSet):
         ai_prefs = _get_ai_prefs(request.user)
         active = ai_prefs["active_provider"]
 
-        return Response({
-            "active_provider": active,
-            "active_model": ai_prefs.get(active, {}).get("model", ""),
-            "providers": {
-                "claude": {
-                    "name": "Claude (Anthropic)",
-                    "model": ai_prefs["claude"]["model"],
-                    "api_key_set": bool(ai_prefs["claude"]["api_key"]),
+        return Response(
+            {
+                "active_provider": active,
+                "active_model": ai_prefs.get(active, {}).get("model", ""),
+                "providers": {
+                    "claude": {
+                        "name": "Claude (Anthropic)",
+                        "model": ai_prefs["claude"]["model"],
+                        "api_key_set": bool(ai_prefs["claude"]["api_key"]),
+                    },
+                    "ollama": {
+                        "name": "Ollama (Lokal)",
+                        "model": ai_prefs["ollama"]["model"],
+                        "base_url": ai_prefs["ollama"]["base_url"],
+                        "api_key_set": True,
+                    },
+                    "openrouter": {
+                        "name": "OpenRouter",
+                        "model": ai_prefs["openrouter"]["model"],
+                        "api_key_set": bool(ai_prefs["openrouter"]["api_key"]),
+                    },
                 },
-                "ollama": {
-                    "name": "Ollama (Lokal)",
-                    "model": ai_prefs["ollama"]["model"],
-                    "base_url": ai_prefs["ollama"]["base_url"],
-                    "api_key_set": True,
-                },
-                "openrouter": {
-                    "name": "OpenRouter",
-                    "model": ai_prefs["openrouter"]["model"],
-                    "api_key_set": bool(ai_prefs["openrouter"]["api_key"]),
-                },
-            },
-        })
+            }
+        )

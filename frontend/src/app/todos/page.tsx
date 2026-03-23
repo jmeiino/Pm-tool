@@ -19,7 +19,7 @@ const statusFilters = [
 export default function TodosPage() {
   const [statusFilter, setStatusFilter] = useState("pending");
   const [showCreate, setShowCreate] = useState(false);
-  const filters = statusFilter ? { status: statusFilter } : {};
+  const filters: Record<string, string> | undefined = statusFilter ? { status: statusFilter } : undefined;
   const { data, isLoading } = useTodos(filters);
   const updateTodo = useUpdateTodo();
 

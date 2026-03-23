@@ -60,13 +60,17 @@ def dispatch_integration_sync(integration_type: str):
 
         if integration_type == "jira":
             from apps.integrations.jira.tasks import poll_jira_updates
+
             poll_jira_updates.delay(integration.id)
         elif integration_type == "confluence":
             from apps.integrations.confluence.tasks import poll_confluence_updates
+
             poll_confluence_updates.delay(integration.id)
         elif integration_type == "github":
             from apps.integrations.git.tasks import poll_github_updates
+
             poll_github_updates.delay(integration.id)
         elif integration_type == "microsoft_calendar":
             from apps.integrations.microsoft.tasks import poll_microsoft_calendar
+
             poll_microsoft_calendar.delay(integration.id)

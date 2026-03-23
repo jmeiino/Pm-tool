@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = []
@@ -177,15 +176,11 @@ class Migration(migrations.Migration):
                 ("is_enabled", models.BooleanField(default=False)),
                 (
                     "credentials",
-                    models.JSONField(
-                        default=dict, help_text="Verschlüsselte Zugangsdaten"
-                    ),
+                    models.JSONField(default=dict, help_text="Verschlüsselte Zugangsdaten"),
                 ),
                 (
                     "settings",
-                    models.JSONField(
-                        default=dict, help_text="poll_interval, selected_projects etc."
-                    ),
+                    models.JSONField(default=dict, help_text="poll_interval, selected_projects etc."),
                 ),
                 ("last_synced_at", models.DateTimeField(blank=True, null=True)),
                 (

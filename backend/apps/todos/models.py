@@ -25,20 +25,19 @@ class PersonalTodo(TimeStampedModel):
         TEAMS = "teams", "Teams"
         AI = "ai", "KI"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="personal_todos"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="personal_todos")
     title = models.CharField(max_length=500)
     description = models.TextField(blank=True)
     priority = models.IntegerField(choices=Priority.choices, default=Priority.MEDIUM)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     due_date = models.DateField(null=True, blank=True)
-    estimated_hours = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )
+    estimated_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     source = models.CharField(max_length=20, choices=Source.choices, default=Source.MANUAL)
     linked_issue = models.ForeignKey(
-        "projects.Issue", on_delete=models.SET_NULL, null=True, blank=True,
+        "projects.Issue",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="personal_todos",
     )
     linked_confluence_page_id = models.CharField(max_length=50, null=True, blank=True)
@@ -56,9 +55,7 @@ class PersonalTodo(TimeStampedModel):
 
 
 class DailyPlan(TimeStampedModel):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_plans"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_plans")
     date = models.DateField()
     ai_summary = models.TextField(blank=True)
     ai_reasoning = models.TextField(blank=True)
@@ -75,12 +72,8 @@ class DailyPlan(TimeStampedModel):
 
 
 class DailyPlanItem(TimeStampedModel):
-    daily_plan = models.ForeignKey(
-        DailyPlan, on_delete=models.CASCADE, related_name="items"
-    )
-    todo = models.ForeignKey(
-        PersonalTodo, on_delete=models.CASCADE, related_name="plan_items"
-    )
+    daily_plan = models.ForeignKey(DailyPlan, on_delete=models.CASCADE, related_name="items")
+    todo = models.ForeignKey(PersonalTodo, on_delete=models.CASCADE, related_name="plan_items")
     order = models.IntegerField()
     scheduled_start = models.TimeField(null=True, blank=True)
     time_block_minutes = models.IntegerField(null=True, blank=True)
@@ -97,9 +90,7 @@ class DailyPlanItem(TimeStampedModel):
 
 
 class WeeklyPlan(TimeStampedModel):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="weekly_plans"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="weekly_plans")
     week_start = models.DateField()
     daily_plans = models.ManyToManyField(DailyPlan, blank=True, related_name="weekly_plans")
     notes = models.TextField(blank=True)

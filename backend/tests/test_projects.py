@@ -1,17 +1,19 @@
 import pytest
-from django.urls import reverse
 
-from tests.factories import CommentFactory, IssueFactory, LabelFactory, ProjectFactory, SprintFactory, UserFactory
+from tests.factories import CommentFactory, IssueFactory, ProjectFactory, SprintFactory
 
 
 @pytest.mark.django_db
 class TestProjectAPI:
     def test_create_project(self, api_client, user):
-        response = api_client.post("/api/v1/projects/", {
-            "name": "Test Projekt",
-            "key": "TST",
-            "description": "Ein Testprojekt",
-        })
+        response = api_client.post(
+            "/api/v1/projects/",
+            {
+                "name": "Test Projekt",
+                "key": "TST",
+                "description": "Ein Testprojekt",
+            },
+        )
         assert response.status_code == 201
         assert response.data["name"] == "Test Projekt"
         assert response.data["key"] == "TST"
@@ -62,24 +64,33 @@ class TestProjectAPI:
 @pytest.mark.django_db
 class TestIssueAPI:
     def test_create_issue_auto_key(self, api_client, project):
-        response = api_client.post("/api/v1/issues/", {
-            "project": project.id,
-            "title": "Test Issue",
-            "issue_type": "task",
-            "priority": "medium",
-        })
+        response = api_client.post(
+            "/api/v1/issues/",
+            {
+                "project": project.id,
+                "title": "Test Issue",
+                "issue_type": "task",
+                "priority": "medium",
+            },
+        )
         assert response.status_code == 201
         assert response.data["key"].startswith(project.key)
 
     def test_create_multiple_issues_sequential_keys(self, api_client, project):
-        r1 = api_client.post("/api/v1/issues/", {
-            "project": project.id,
-            "title": "Issue 1",
-        })
-        r2 = api_client.post("/api/v1/issues/", {
-            "project": project.id,
-            "title": "Issue 2",
-        })
+        r1 = api_client.post(
+            "/api/v1/issues/",
+            {
+                "project": project.id,
+                "title": "Issue 1",
+            },
+        )
+        r2 = api_client.post(
+            "/api/v1/issues/",
+            {
+                "project": project.id,
+                "title": "Issue 2",
+            },
+        )
         assert r1.status_code == 201
         assert r2.status_code == 201
         # Keys should be different
@@ -154,9 +165,12 @@ class TestCommentAPI:
 @pytest.mark.django_db
 class TestLabelAPI:
     def test_create_label(self, api_client):
-        response = api_client.post("/api/v1/labels/", {
-            "name": "Feature",
-            "color": "#22C55E",
-        })
+        response = api_client.post(
+            "/api/v1/labels/",
+            {
+                "name": "Feature",
+                "color": "#22C55E",
+            },
+        )
         assert response.status_code == 201
         assert response.data["name"] == "Feature"

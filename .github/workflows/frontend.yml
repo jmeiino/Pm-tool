@@ -1,0 +1,59 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+jobs:
+  lint:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: ESLint (next lint)
+        working-directory: frontend
+        run: npm run lint
+
+      - name: TypeScript typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+  test:
+    name: Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No frontend tests configured yet. Add vitest or jest to enable."
+
+  build:
+    name: Docker Build
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1 \
+            -t pm-tool-frontend:ci \
+            ./frontend

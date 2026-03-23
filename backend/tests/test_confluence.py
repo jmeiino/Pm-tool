@@ -2,7 +2,6 @@ import pytest
 from django.utils import timezone
 
 from apps.integrations.models import ConfluencePage
-from tests.factories import UserFactory
 
 
 @pytest.fixture
@@ -25,9 +24,7 @@ class TestConfluencePageAPI:
         assert response.data["results"][0]["title"] == "Architektur-Entscheidung"
 
     def test_retrieve_page(self, api_client, user, confluence_page):
-        response = api_client.get(
-            f"/api/v1/integrations/confluence-pages/{confluence_page.id}/"
-        )
+        response = api_client.get(f"/api/v1/integrations/confluence-pages/{confluence_page.id}/")
         assert response.status_code == 200
         assert response.data["space_key"] == "DEV"
 
@@ -39,30 +36,22 @@ class TestConfluencePageAPI:
             content_text="Team-Inhalt",
             last_confluence_update=timezone.now(),
         )
-        response = api_client.get(
-            "/api/v1/integrations/confluence-pages/?space_key=DEV"
-        )
+        response = api_client.get("/api/v1/integrations/confluence-pages/?space_key=DEV")
         assert response.status_code == 200
         assert response.data["count"] == 1
 
     def test_search_pages(self, api_client, user, confluence_page):
-        response = api_client.get(
-            "/api/v1/integrations/confluence-pages/?search=Architektur"
-        )
+        response = api_client.get("/api/v1/integrations/confluence-pages/?search=Architektur")
         assert response.status_code == 200
         assert response.data["count"] == 1
 
     def test_analyze_page(self, api_client, user, confluence_page):
-        response = api_client.post(
-            f"/api/v1/integrations/confluence-pages/{confluence_page.id}/analyze/"
-        )
+        response = api_client.post(f"/api/v1/integrations/confluence-pages/{confluence_page.id}/analyze/")
         assert response.status_code == 202
         assert "page_id" in response.data
 
     def test_create_todos_without_analysis(self, api_client, user, confluence_page):
-        response = api_client.post(
-            f"/api/v1/integrations/confluence-pages/{confluence_page.id}/create-todos/"
-        )
+        response = api_client.post(f"/api/v1/integrations/confluence-pages/{confluence_page.id}/create-todos/")
         assert response.status_code == 400
 
     def test_create_todos_with_action_items(self, api_client, user, confluence_page):
@@ -72,13 +61,12 @@ class TestConfluencePageAPI:
         ]
         confluence_page.save()
 
-        response = api_client.post(
-            f"/api/v1/integrations/confluence-pages/{confluence_page.id}/create-todos/"
-        )
+        response = api_client.post(f"/api/v1/integrations/confluence-pages/{confluence_page.id}/create-todos/")
         assert response.status_code == 201
         assert response.data["count"] == 2
 
         from apps.todos.models import PersonalTodo
+
         todos = PersonalTodo.objects.filter(user=user)
         assert todos.count() == 2
         assert todos.filter(title="Frontend implementieren").exists()

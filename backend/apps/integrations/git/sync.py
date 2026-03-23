@@ -42,9 +42,7 @@ class GitHubSyncService:
                     "title": commit_data.get("commit", {}).get("message", "")[:500],
                     "url": commit_data.get("html_url", ""),
                     "event_date": commit_data.get("commit", {}).get("author", {}).get("date", timezone.now()),
-                    "linked_issue": self._link_to_issue(
-                        commit_data.get("commit", {}).get("message", ""), project
-                    ),
+                    "linked_issue": self._link_to_issue(commit_data.get("commit", {}).get("message", ""), project),
                 },
             )
             if was_created:

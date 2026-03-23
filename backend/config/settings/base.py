@@ -2,7 +2,6 @@
 Django base settings for PM-Tool.
 """
 
-import os
 from pathlib import Path
 
 from decouple import Csv, config

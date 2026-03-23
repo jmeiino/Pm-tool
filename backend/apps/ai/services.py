@@ -1,9 +1,9 @@
 import hashlib
 import json
 import logging
+from datetime import timedelta
 
 from django.utils import timezone
-from datetime import timedelta
 
 from .client import get_ai_client
 from .models import AIResult

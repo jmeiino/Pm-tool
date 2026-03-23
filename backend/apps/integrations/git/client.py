@@ -62,9 +62,7 @@ class GitHubClient:
 
     def get_issues(self, owner: str, repo: str, state: str = "all") -> list[dict]:
         """Issues abrufen (ohne PRs)."""
-        all_items = self._paginate(
-            f"/repos/{owner}/{repo}/issues", {"state": state}
-        )
+        all_items = self._paginate(f"/repos/{owner}/{repo}/issues", {"state": state})
         return [item for item in all_items if "pull_request" not in item]
 
     def get_repo(self, owner: str, repo: str) -> dict:
@@ -106,9 +104,7 @@ class GitHubClient:
         response.raise_for_status()
         return response.json()
 
-    def create_webhook(
-        self, owner: str, repo: str, callback_url: str, events: list[str]
-    ) -> dict:
+    def create_webhook(self, owner: str, repo: str, callback_url: str, events: list[str]) -> dict:
         """Webhook für Repository-Events erstellen."""
         webhook_secret = secrets.token_hex(32)
         payload = {
@@ -120,9 +116,7 @@ class GitHubClient:
             "events": events,
             "active": True,
         }
-        response = self.client.post(
-            f"/repos/{owner}/{repo}/hooks", json=payload
-        )
+        response = self.client.post(f"/repos/{owner}/{repo}/hooks", json=payload)
         response.raise_for_status()
         result = response.json()
         result["secret"] = webhook_secret

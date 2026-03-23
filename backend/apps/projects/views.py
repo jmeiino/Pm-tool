@@ -1,4 +1,4 @@
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -37,9 +37,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         stats = {
             "total": issues.count(),
-            "by_status": dict(
-                issues.values_list("status").annotate(count=Count("id")).values_list("status", "count")
-            ),
+            "by_status": dict(issues.values_list("status").annotate(count=Count("id")).values_list("status", "count")),
             "by_type": dict(
                 issues.values_list("issue_type").annotate(count=Count("id")).values_list("issue_type", "count")
             ),
@@ -111,9 +109,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
 
     def get_queryset(self):
-        return Comment.objects.select_related("author", "issue").filter(
-            issue_id=self.kwargs.get("issue_pk")
-        )
+        return Comment.objects.select_related("author", "issue").filter(issue_id=self.kwargs.get("issue_pk"))
 
     def perform_create(self, serializer):
         serializer.save(

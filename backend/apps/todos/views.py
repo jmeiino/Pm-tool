@@ -29,10 +29,7 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
     lookup_field = "date"
 
     def get_queryset(self):
-        return (
-            DailyPlan.objects.filter(user=self.request.user)
-            .prefetch_related("items__todo")
-        )
+        return DailyPlan.objects.filter(user=self.request.user).prefetch_related("items__todo")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -46,9 +43,7 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
         daily_plan = self.get_object()
         items_data = request.data.get("items", [])
         for item_data in items_data:
-            DailyPlanItem.objects.filter(
-                id=item_data["id"], daily_plan=daily_plan
-            ).update(order=item_data["order"])
+            DailyPlanItem.objects.filter(id=item_data["id"], daily_plan=daily_plan).update(order=item_data["order"])
         return Response(self.get_serializer(daily_plan).data)
 
     @action(detail=True, methods=["post"], url_path="add-item")
@@ -91,9 +86,7 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
             from apps.integrations.models import CalendarEvent
             from apps.integrations.serializers import CalendarEventSerializer
 
-            todos = PersonalTodo.objects.filter(
-                user=request.user, status__in=["pending", "in_progress"]
-            )
+            todos = PersonalTodo.objects.filter(user=request.user, status__in=["pending", "in_progress"])
             calendar_events = CalendarEvent.objects.filter(
                 user=request.user,
                 start_time__date=daily_plan.date,
@@ -140,10 +133,7 @@ class WeeklyPlanViewSet(viewsets.ModelViewSet):
     lookup_field = "week_start"
 
     def get_queryset(self):
-        return (
-            WeeklyPlan.objects.filter(user=self.request.user)
-            .prefetch_related("daily_plans__items__todo")
-        )
+        return WeeklyPlan.objects.filter(user=self.request.user).prefetch_related("daily_plans__items__todo")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -182,6 +172,7 @@ def _calc_minutes(start_str: str | None, end_str: str | None) -> int | None:
         return None
     try:
         from datetime import datetime
+
         fmt = "%H:%M"
         start = datetime.strptime(start_str, fmt)
         end = datetime.strptime(end_str, fmt)
