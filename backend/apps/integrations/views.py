@@ -53,6 +53,9 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
         elif integration.integration_type == IntegrationConfig.IntegrationType.GITHUB:
             from apps.integrations.git.tasks import poll_github_updates
             poll_github_updates.delay(integration.id)
+        elif integration.integration_type == IntegrationConfig.IntegrationType.MICROSOFT_CALENDAR:
+            from apps.integrations.microsoft.tasks import poll_microsoft_calendar
+            poll_microsoft_calendar.delay(integration.id)
 
         return Response(
             {"detail": "Synchronisierung gestartet."},

@@ -1,22 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { PaginatedResponse } from "@/lib/types";
-
-export interface ConfluencePage {
-  id: number;
-  confluence_page_id: string;
-  space_key: string;
-  title: string;
-  content_text: string;
-  last_confluence_update: string;
-  ai_summary: string;
-  ai_action_items: string[];
-  ai_decisions: string[];
-  ai_risks: string[];
-  ai_processed_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { PaginatedResponse, ConfluencePage } from "@/lib/types";
 
 export function useConfluencePages(filters?: Record<string, string>) {
   const params = new URLSearchParams(filters);

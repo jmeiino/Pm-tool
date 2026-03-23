@@ -80,3 +80,36 @@ class DailyPlanFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     date = factory.LazyFunction(lambda: timezone.now().date())
+
+
+class IntegrationConfigFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "integrations.IntegrationConfig"
+
+    user = factory.SubFactory(UserFactory)
+    integration_type = "jira"
+    is_enabled = True
+    credentials = factory.LazyFunction(dict)
+
+
+class CalendarEventFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "integrations.CalendarEvent"
+
+    user = factory.SubFactory(UserFactory)
+    external_id = factory.Sequence(lambda n: f"evt-{n}")
+    title = factory.Sequence(lambda n: f"Event {n}")
+    start_time = factory.LazyFunction(timezone.now)
+    end_time = factory.LazyFunction(lambda: timezone.now() + timezone.timedelta(hours=1))
+
+
+class GitActivityFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "integrations.GitActivity"
+
+    project = factory.SubFactory(ProjectFactory)
+    event_type = "commit"
+    author = factory.Faker("email")
+    title = factory.Sequence(lambda n: f"Commit {n}")
+    external_id = factory.Sequence(lambda n: f"sha-{n}")
+    event_date = factory.LazyFunction(timezone.now)

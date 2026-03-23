@@ -8,6 +8,7 @@ import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
 import { JiraConnectDialog } from "@/components/integrations/JiraConnectDialog";
 import { ConfluenceConnectDialog } from "@/components/integrations/ConfluenceConnectDialog";
 import { GitHubConnectDialog } from "@/components/integrations/GitHubConnectDialog";
+import { MicrosoftConnectDialog } from "@/components/integrations/MicrosoftConnectDialog";
 import { SyncStatusIndicator } from "@/components/integrations/SyncStatusIndicator";
 
 const integrationMeta: Record<
@@ -56,13 +57,7 @@ export default function EinstellungenPage() {
     if (type === "jira") setOpenDialog("jira");
     else if (type === "confluence") setOpenDialog("confluence");
     else if (type === "github") setOpenDialog("github");
-    else if (type === "microsoft_calendar") {
-      // Microsoft uses OAuth redirect
-      window.open(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/integrations/microsoft/auth/`,
-        "_blank"
-      );
-    }
+    else if (type === "microsoft_calendar") setOpenDialog("microsoft");
   };
 
   return (
@@ -153,6 +148,7 @@ export default function EinstellungenPage() {
       <JiraConnectDialog open={openDialog === "jira"} onClose={() => setOpenDialog(null)} />
       <ConfluenceConnectDialog open={openDialog === "confluence"} onClose={() => setOpenDialog(null)} />
       <GitHubConnectDialog open={openDialog === "github"} onClose={() => setOpenDialog(null)} />
+      <MicrosoftConnectDialog open={openDialog === "microsoft"} onClose={() => setOpenDialog(null)} />
     </div>
   );
 }

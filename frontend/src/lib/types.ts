@@ -182,6 +182,23 @@ export interface GitActivity {
   linked_issue: number | null;
 }
 
+// Confluence
+export interface ConfluencePage {
+  id: number;
+  confluence_page_id: string;
+  space_key: string;
+  title: string;
+  content_text: string;
+  last_confluence_update: string;
+  ai_summary: string;
+  ai_action_items: string[];
+  ai_decisions: string[];
+  ai_risks: string[];
+  ai_processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // API Responses
 export interface PaginatedResponse<T> {
   count: number;
