@@ -136,6 +136,36 @@ class CalendarEvent(TimeStampedModel):
         return f"{self.title} ({self.start_time:%Y-%m-%d %H:%M})"
 
 
+class GitRepoAnalysis(TimeStampedModel):
+    """Gespeicherte KI-Analyse eines GitHub-Repositories."""
+
+    repo_full_name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+    primary_language = models.CharField(max_length=100, blank=True)
+    languages = models.JSONField(default=dict)
+    stars = models.IntegerField(default=0)
+    forks = models.IntegerField(default=0)
+    open_issues_count = models.IntegerField(default=0)
+    topics = models.JSONField(default=list)
+    default_branch = models.CharField(max_length=100, default="main")
+    readme_content = models.TextField(blank=True)
+    recent_commits_summary = models.TextField(blank=True)
+    ai_summary = models.TextField(blank=True)
+    ai_tech_stack = models.JSONField(default=list)
+    ai_strengths = models.JSONField(default=list)
+    ai_improvements = models.JSONField(default=list)
+    ai_action_items = models.JSONField(default=list)
+    ai_processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Repository-Analyse"
+        verbose_name_plural = "Repository-Analysen"
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.repo_full_name
+
+
 class GitActivity(TimeStampedModel):
     class EventType(models.TextChoices):
         COMMIT = "commit", "Commit"

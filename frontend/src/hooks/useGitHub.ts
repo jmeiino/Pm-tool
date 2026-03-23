@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { PaginatedResponse, GitActivity } from "@/lib/types";
+import type { PaginatedResponse, GitActivity, GitRepoAnalysis } from "@/lib/types";
 
 export function useGitActivities(filters?: {
   project?: number;
@@ -15,6 +15,73 @@ export function useGitActivities(filters?: {
     queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<GitActivity>>(
         `/integrations/git-activities/?${params.toString()}`
+      );
+      return data;
+    },
+  });
+}
+
+export function useRepoAnalyses() {
+  return useQuery({
+    queryKey: ["repo-analyses"],
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<GitRepoAnalysis>>(
+        "/integrations/repo-analyses/"
+      );
+      return data;
+    },
+  });
+}
+
+export function useRepoAnalysis(id: number) {
+  return useQuery({
+    queryKey: ["repo-analyses", id],
+    queryFn: async () => {
+      const { data } = await api.get<GitRepoAnalysis>(
+        `/integrations/repo-analyses/${id}/`
+      );
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateRepoAnalysis() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (repoFullName: string) => {
+      const { data } = await api.post<GitRepoAnalysis>(
+        "/integrations/repo-analyses/",
+        { repo_full_name: repoFullName }
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["repo-analyses"] });
+    },
+  });
+}
+
+export function useAnalyzeRepo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await api.post(
+        `/integrations/repo-analyses/${id}/analyze/`
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["repo-analyses"] });
+    },
+  });
+}
+
+export function useCreateTodosFromRepo() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await api.post<{ detail: string; count: number }>(
+        `/integrations/repo-analyses/${id}/create-todos/`
       );
       return data;
     },

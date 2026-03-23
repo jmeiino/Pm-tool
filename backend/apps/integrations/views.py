@@ -2,11 +2,12 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import CalendarEvent, ConfluencePage, GitActivity, IntegrationConfig, SyncLog
+from .models import CalendarEvent, ConfluencePage, GitActivity, GitRepoAnalysis, IntegrationConfig, SyncLog
 from .serializers import (
     CalendarEventSerializer,
     ConfluencePageSerializer,
     GitActivitySerializer,
+    GitRepoAnalysisSerializer,
     IntegrationConfigSerializer,
     SyncLogSerializer,
 )
@@ -143,6 +144,56 @@ class CalendarEventViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         if end:
             qs = qs.filter(end_time__lte=end)
         return qs.order_by("start_time")
+
+
+class GitRepoAnalysisViewSet(viewsets.ModelViewSet):
+    """GitHub-Repository-Analysen anzeigen, erstellen und KI-Analyse auslösen."""
+
+    serializer_class = GitRepoAnalysisSerializer
+    queryset = GitRepoAnalysis.objects.all()
+    search_fields = ["repo_full_name", "description"]
+
+    @action(detail=True, methods=["post"])
+    def analyze(self, request, pk=None):
+        """KI-Analyse eines GitHub-Repositories auslösen."""
+        repo = self.get_object()
+
+        from apps.integrations.git.tasks import analyze_github_repo_task
+        analyze_github_repo_task.delay(repo.id)
+
+        return Response(
+            {"detail": "Repository-Analyse gestartet.", "repo_id": repo.id},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="create-todos")
+    def create_todos(self, request, pk=None):
+        """Aufgaben aus Repository-Verbesserungsvorschlägen erstellen."""
+        repo = self.get_object()
+
+        if not repo.ai_action_items:
+            return Response(
+                {"detail": "Keine Aktionspunkte vorhanden. Bitte zuerst analysieren."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.todos.models import PersonalTodo
+        created_count = 0
+        for item in repo.ai_action_items:
+            title = item if isinstance(item, str) else item.get("action", "")
+            if title:
+                PersonalTodo.objects.create(
+                    user=request.user,
+                    title=f"[{repo.repo_full_name}] {title}",
+                    source=PersonalTodo.Source.AI,
+                    metadata={"source_repo": repo.repo_full_name},
+                )
+                created_count += 1
+
+        return Response(
+            {"detail": f"{created_count} Aufgaben erstellt.", "count": created_count},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class GitActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

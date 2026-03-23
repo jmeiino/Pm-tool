@@ -67,6 +67,39 @@ class GitHubClient:
         )
         return [item for item in all_items if "pull_request" not in item]
 
+    def get_repo(self, owner: str, repo: str) -> dict:
+        """Repository-Metadaten abrufen."""
+        response = self.client.get(f"/repos/{owner}/{repo}")
+        response.raise_for_status()
+        return response.json()
+
+    def get_readme(self, owner: str, repo: str) -> str:
+        """README-Inhalt als Text abrufen."""
+        try:
+            response = self.client.get(
+                f"/repos/{owner}/{repo}/readme",
+                headers={"Accept": "application/vnd.github.raw+json"},
+            )
+            response.raise_for_status()
+            return response.text[:10000]
+        except httpx.HTTPStatusError:
+            return ""
+
+    def get_languages(self, owner: str, repo: str) -> dict:
+        """Sprachverteilung (Bytes pro Sprache) abrufen."""
+        response = self.client.get(f"/repos/{owner}/{repo}/languages")
+        response.raise_for_status()
+        return response.json()
+
+    def get_contributors(self, owner: str, repo: str, limit: int = 10) -> list[dict]:
+        """Top-Contributors abrufen."""
+        response = self.client.get(
+            f"/repos/{owner}/{repo}/contributors",
+            params={"per_page": str(limit)},
+        )
+        response.raise_for_status()
+        return response.json()
+
     def get_webhooks(self, owner: str, repo: str) -> list[dict]:
         """Vorhandene Webhooks abrufen."""
         response = self.client.get(f"/repos/{owner}/{repo}/hooks")

@@ -37,6 +37,30 @@ EXTRACT_ACTIONS_SYSTEM_PROMPT = (
     "(falls erkennbar, sonst null), 'priority' (high/medium/low)."
 )
 
+GITHUB_REPO_ANALYSIS_SYSTEM_PROMPT = (
+    "Du bist ein Experte für Software-Architektur und Code-Analyse. Analysiere das "
+    "gegebene GitHub-Repository anhand der Metadaten, Sprachen, README und letzten "
+    "Commits. Antworte ausschließlich im JSON-Format mit folgenden Schlüsseln: "
+    "'summary' (kurze Zusammenfassung des Projekts, 2-3 Sätze), "
+    "'tech_stack' (Liste der erkannten Technologien und Frameworks), "
+    "'strengths' (Liste von Stärken des Projekts), "
+    "'improvements' (Liste konkreter Verbesserungsvorschläge), "
+    "'action_items' (Liste von priorisierten nächsten Schritten als Objekte mit "
+    "'action', 'priority' (high/medium/low), 'reasoning')."
+)
+
+GITHUB_REPO_ANALYSIS_USER_PROMPT = (
+    "Analysiere folgendes GitHub-Repository:\n\n"
+    "Name: {repo_name}\n"
+    "Beschreibung: {description}\n"
+    "Hauptsprache: {primary_language}\n"
+    "Sprachen: {languages}\n"
+    "Sterne: {stars} | Forks: {forks} | Offene Issues: {open_issues}\n"
+    "Themen: {topics}\n\n"
+    "README:\n{readme}\n\n"
+    "Letzte Commits:\n{recent_commits}"
+)
+
 CONFLUENCE_ANALYSIS_SYSTEM_PROMPT = (
     "Du bist ein Experte für die Analyse von Confluence-Seiten. Analysiere den "
     "gegebenen Seiteninhalt und extrahiere strukturierte Informationen. "

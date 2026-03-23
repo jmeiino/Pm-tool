@@ -6,6 +6,7 @@ from .views import (
     CalendarEventViewSet,
     ConfluencePageViewSet,
     GitActivityViewSet,
+    GitRepoAnalysisViewSet,
     IntegrationConfigViewSet,
     SyncLogViewSet,
 )
@@ -16,6 +17,7 @@ router.register(r"sync-logs", SyncLogViewSet, basename="sync-log")
 router.register(r"confluence-pages", ConfluencePageViewSet, basename="confluence-page")
 router.register(r"calendar-events", CalendarEventViewSet, basename="calendar-event")
 router.register(r"git-activities", GitActivityViewSet, basename="git-activity")
+router.register(r"repo-analyses", GitRepoAnalysisViewSet, basename="repo-analysis")
 
 urlpatterns = [
     path("", include(router.urls)),

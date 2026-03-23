@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -55,6 +56,22 @@ export default function GitHubPage() {
             Commits, Pull Requests und Code-Aktivität
           </p>
         </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex gap-2">
+        <Link
+          href="/github"
+          className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
+        >
+          Aktivitaeten
+        </Link>
+        <Link
+          href="/github/repos"
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Repository-Analyse
+        </Link>
       </div>
 
       {/* Statistik */}

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CalendarEvent, ConfluencePage, GitActivity, IntegrationConfig, SyncLog
+from .models import CalendarEvent, ConfluencePage, GitActivity, GitRepoAnalysis, IntegrationConfig, SyncLog
 
 
 class IntegrationConfigSerializer(serializers.ModelSerializer):
@@ -106,6 +106,53 @@ class CalendarEventSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+
+class GitRepoAnalysisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GitRepoAnalysis
+        fields = [
+            "id",
+            "repo_full_name",
+            "description",
+            "primary_language",
+            "languages",
+            "stars",
+            "forks",
+            "open_issues_count",
+            "topics",
+            "default_branch",
+            "readme_content",
+            "recent_commits_summary",
+            "ai_summary",
+            "ai_tech_stack",
+            "ai_strengths",
+            "ai_improvements",
+            "ai_action_items",
+            "ai_processed_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "description",
+            "primary_language",
+            "languages",
+            "stars",
+            "forks",
+            "open_issues_count",
+            "topics",
+            "default_branch",
+            "readme_content",
+            "recent_commits_summary",
+            "ai_summary",
+            "ai_tech_stack",
+            "ai_strengths",
+            "ai_improvements",
+            "ai_action_items",
+            "ai_processed_at",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class GitActivitySerializer(serializers.ModelSerializer):

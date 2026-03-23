@@ -12,6 +12,8 @@ from .prompts import (
     DAILY_PLAN_SYSTEM_PROMPT,
     DAILY_PLAN_USER_PROMPT,
     EXTRACT_ACTIONS_SYSTEM_PROMPT,
+    GITHUB_REPO_ANALYSIS_SYSTEM_PROMPT,
+    GITHUB_REPO_ANALYSIS_USER_PROMPT,
     PRIORITIZE_SYSTEM_PROMPT,
     SUMMARIZE_SYSTEM_PROMPT,
 )
@@ -114,6 +116,31 @@ class AIService:
         prompt = f"Extrahiere alle Aktionspunkte aus folgendem Text:\n\n{text}"
         result = self.client.generate_json(prompt, system_prompt=EXTRACT_ACTIONS_SYSTEM_PROMPT)
         self._cache_result(content_hash, AIResult.ResultType.ACTION_ITEMS, result, text[:500])
+        return result
+
+    def analyze_github_repo(self, repo_data: dict) -> dict:
+        """Analysiert ein GitHub-Repository."""
+        content = json.dumps(repo_data, ensure_ascii=False, default=str)
+        content_hash = self._compute_hash(content, AIResult.ResultType.REPO_ANALYSIS)
+
+        cached = self._get_cached(content_hash, AIResult.ResultType.REPO_ANALYSIS)
+        if cached:
+            return cached
+
+        prompt = GITHUB_REPO_ANALYSIS_USER_PROMPT.format(
+            repo_name=repo_data.get("repo_name", ""),
+            description=repo_data.get("description", ""),
+            primary_language=repo_data.get("primary_language", ""),
+            languages=repo_data.get("languages", ""),
+            stars=repo_data.get("stars", 0),
+            forks=repo_data.get("forks", 0),
+            open_issues=repo_data.get("open_issues", 0),
+            topics=", ".join(repo_data.get("topics", [])),
+            readme=repo_data.get("readme", "")[:5000],
+            recent_commits=repo_data.get("recent_commits", ""),
+        )
+        result = self.client.generate_json(prompt, system_prompt=GITHUB_REPO_ANALYSIS_SYSTEM_PROMPT)
+        self._cache_result(content_hash, AIResult.ResultType.REPO_ANALYSIS, result, content[:500])
         return result
 
     def analyze_confluence_page(self, page_content: str) -> dict:

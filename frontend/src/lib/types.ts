@@ -169,6 +169,30 @@ export interface ProjectStats {
   };
 }
 
+// Repository-Analyse
+export interface GitRepoAnalysis {
+  id: number;
+  repo_full_name: string;
+  description: string;
+  primary_language: string;
+  languages: Record<string, number>;
+  stars: number;
+  forks: number;
+  open_issues_count: number;
+  topics: string[];
+  default_branch: string;
+  readme_content: string;
+  recent_commits_summary: string;
+  ai_summary: string;
+  ai_tech_stack: string[];
+  ai_strengths: string[];
+  ai_improvements: string[];
+  ai_action_items: Array<{ action: string; priority: string; reasoning: string } | string>;
+  ai_processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Git-Aktivitäten
 export interface GitActivity {
   id: number;

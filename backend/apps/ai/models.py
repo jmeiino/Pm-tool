@@ -10,9 +10,10 @@ class AIResult(TimeStampedModel):
         PRIORITIZATION = "prioritization", "Priorisierung"
         DAILY_PLAN = "daily_plan", "Tagesplan"
         EXTRACTION = "extraction", "Extraktion"
+        REPO_ANALYSIS = "repo_analysis", "Repository-Analyse"
 
     content_hash = models.CharField(max_length=64, db_index=True)
-    result_type = models.CharField(max_length=20, choices=ResultType.choices)
+    result_type = models.CharField(max_length=20, choices=ResultType.choices, db_index=True)
     input_preview = models.TextField(blank=True)
     result = models.JSONField()
     model_used = models.CharField(max_length=50)
