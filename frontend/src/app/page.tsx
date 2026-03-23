@@ -14,7 +14,7 @@ import {
 } from "@/hooks/useTodos";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useCalendarEvents } from "@/hooks/useCalendar";
-import { useGitActivities } from "@/hooks/useGitActivities";
+import { useGitActivities } from "@/hooks/useGitHub";
 import { priorityLabels, priorityColors, formatDate } from "@/lib/utils";
 import {
   SparklesIcon,
