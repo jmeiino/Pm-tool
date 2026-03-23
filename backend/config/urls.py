@@ -8,7 +8,7 @@ urlpatterns = [
     path("api/v1/", include("apps.users.urls")),
     path("api/v1/", include("apps.projects.urls")),
     path("api/v1/", include("apps.todos.urls")),
-    path("api/v1/", include("apps.integrations.urls")),
+    path("api/v1/integrations/", include("apps.integrations.urls")),
     path("api/v1/", include("apps.ai.urls")),
     path("api/v1/", include("apps.notifications.urls")),
     # API Docs

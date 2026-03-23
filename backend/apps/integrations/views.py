@@ -1,3 +1,4 @@
+from dateutil import parser as dateparser
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -144,9 +145,9 @@ class CalendarEventViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         start = self.request.query_params.get("start")
         end = self.request.query_params.get("end")
         if start:
-            qs = qs.filter(start_time__gte=start)
+            qs = qs.filter(start_time__gte=dateparser.parse(start))
         if end:
-            qs = qs.filter(end_time__lte=end)
+            qs = qs.filter(end_time__lte=dateparser.parse(end))
         return qs.order_by("start_time")
 
 
@@ -208,7 +209,7 @@ class GitActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = GitActivitySerializer
 
     def get_queryset(self):
-        qs = GitActivity.objects.all()
+        qs = GitActivity.objects.all().order_by("-event_date")
         project_id = self.request.query_params.get("project")
         if project_id:
             qs = qs.filter(project_id=project_id)

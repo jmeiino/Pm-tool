@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.utils import timezone
 
@@ -63,7 +65,8 @@ class TestCalendarEventAPI:
 
 @pytest.mark.django_db
 class TestMicrosoftSyncDispatch:
-    def test_sync_dispatches_microsoft_task(self, api_client, user):
+    @patch("apps.integrations.microsoft.tasks.poll_microsoft_calendar.delay")
+    def test_sync_dispatches_microsoft_task(self, mock_task, api_client, user):
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="microsoft_calendar",
@@ -71,9 +74,9 @@ class TestMicrosoftSyncDispatch:
             credentials={"access_token": "test"},
             sync_status=IntegrationConfig.SyncStatus.IDLE,
         )
-        # Task will fail because no real MS credentials, but the dispatch path is exercised
 
         response = api_client.post(f"/api/v1/integrations/configs/{integration.id}/sync/")
         assert response.status_code == 202
         integration.refresh_from_db()
         assert integration.sync_status == "syncing"
+        mock_task.assert_called_once_with(integration.id)

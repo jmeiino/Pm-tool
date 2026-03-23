@@ -8,7 +8,8 @@ from apps.integrations.models import CalendarEvent, IntegrationConfig
 
 @pytest.mark.django_db
 class TestGraphClient:
-    def test_graph_client_set_token(self):
+    @patch("apps.integrations.microsoft.graph_client.msal.ConfidentialClientApplication")
+    def test_graph_client_set_token(self, mock_msal):
         from apps.integrations.microsoft.graph_client import GraphClient
 
         client = GraphClient(
@@ -20,7 +21,8 @@ class TestGraphClient:
         client.set_token("test-access-token")
         assert client._access_token == "test-access-token"
 
-    def test_graph_client_request_without_token(self):
+    @patch("apps.integrations.microsoft.graph_client.msal.ConfidentialClientApplication")
+    def test_graph_client_request_without_token(self, mock_msal):
         from apps.integrations.microsoft.graph_client import GraphClient
 
         client = GraphClient(
@@ -35,8 +37,9 @@ class TestGraphClient:
 
 @pytest.mark.django_db
 class TestMicrosoftSyncService:
+    @patch("apps.integrations.microsoft.graph_client.msal.ConfidentialClientApplication")
     @patch("apps.integrations.microsoft.graph_client.GraphClient.get_calendar_events")
-    def test_sync_calendar_creates_events(self, mock_events, user):
+    def test_sync_calendar_creates_events(self, mock_events, mock_msal, user):
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="microsoft_calendar",
@@ -86,8 +89,9 @@ class TestMicrosoftSyncService:
         assert event.location == "Raum 1"
         assert len(event.attendees) == 2
 
+    @patch("apps.integrations.microsoft.graph_client.msal.ConfidentialClientApplication")
     @patch("apps.integrations.microsoft.graph_client.GraphClient.get_calendar_events")
-    def test_sync_calendar_updates_existing(self, mock_events, user):
+    def test_sync_calendar_updates_existing(self, mock_events, mock_msal, user):
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="microsoft_calendar",
@@ -128,8 +132,9 @@ class TestMicrosoftSyncService:
         event = CalendarEvent.objects.get(external_id="ms-event-1")
         assert event.title == "New Title"
 
+    @patch("apps.integrations.microsoft.graph_client.msal.ConfidentialClientApplication")
     @patch("apps.integrations.microsoft.graph_client.GraphClient.get_calendar_events")
-    def test_sync_inbound_creates_sync_log(self, mock_events, user):
+    def test_sync_inbound_creates_sync_log(self, mock_events, mock_msal, user):
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="microsoft_calendar",

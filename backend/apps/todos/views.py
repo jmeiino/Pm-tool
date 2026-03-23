@@ -58,8 +58,9 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
             daily_plan=daily_plan,
             order=serializer.validated_data.get("order", max_order),
         )
+        daily_plan.refresh_from_db()
         return Response(
-            self.get_serializer(daily_plan).data,
+            self.get_serializer(self.get_queryset().get(pk=daily_plan.pk)).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -74,7 +75,8 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         DailyPlanItem.objects.filter(id=item_id, daily_plan=daily_plan).delete()
-        return Response(self.get_serializer(daily_plan).data)
+        daily_plan.refresh_from_db()
+        return Response(self.get_serializer(self.get_queryset().get(pk=daily_plan.pk)).data)
 
     @action(detail=True, methods=["post"], url_path="ai-suggest")
     def ai_suggest(self, request, date=None):

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.utils import timezone
 
@@ -45,10 +47,12 @@ class TestConfluencePageAPI:
         assert response.status_code == 200
         assert response.data["count"] == 1
 
-    def test_analyze_page(self, api_client, user, confluence_page):
+    @patch("apps.integrations.confluence.tasks.analyze_confluence_page_task.delay")
+    def test_analyze_page(self, mock_task, api_client, user, confluence_page):
         response = api_client.post(f"/api/v1/integrations/confluence-pages/{confluence_page.id}/analyze/")
         assert response.status_code == 202
         assert "page_id" in response.data
+        mock_task.assert_called_once_with(confluence_page.id)
 
     def test_create_todos_without_analysis(self, api_client, user, confluence_page):
         response = api_client.post(f"/api/v1/integrations/confluence-pages/{confluence_page.id}/create-todos/")

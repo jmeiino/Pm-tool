@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.utils import timezone
 
@@ -101,7 +103,8 @@ class TestGitHubClient:
 
 @pytest.mark.django_db
 class TestGitHubSyncDispatch:
-    def test_sync_dispatches_github_task(self, api_client, user):
+    @patch("apps.integrations.git.tasks.poll_github_updates.delay")
+    def test_sync_dispatches_github_task(self, mock_task, api_client, user):
         integration = IntegrationConfig.objects.create(
             user=user,
             integration_type="github",
@@ -114,3 +117,4 @@ class TestGitHubSyncDispatch:
         assert response.status_code == 202
         integration.refresh_from_db()
         assert integration.sync_status == "syncing"
+        mock_task.assert_called_once_with(integration.id)
