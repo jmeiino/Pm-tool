@@ -13,6 +13,7 @@ import {
   Cog6ToothIcon,
   ClipboardDocumentListIcon,
   CodeBracketIcon,
+  ArrowDownTrayIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Wochenplan", href: "/planung/wochenplan", icon: CalendarDaysIcon },
   { name: "Confluence", href: "/confluence", icon: DocumentTextIcon },
   { name: "GitHub", href: "/github", icon: CodeBracketIcon },
+  { name: "Import", href: "/import", icon: ArrowDownTrayIcon },
   { name: "Kalender", href: "/kalender", icon: CalendarDaysIcon },
   { name: "Einstellungen", href: "/einstellungen", icon: Cog6ToothIcon },
 ];

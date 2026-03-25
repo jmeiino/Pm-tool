@@ -223,6 +223,110 @@ export interface ConfluencePage {
   updated_at: string;
 }
 
+// ─── Import Wizard Types ─────────────────────────────────────────────────────
+
+// Jira Preview
+export interface JiraPreviewIssue {
+  jira_id: string;
+  key: string;
+  summary: string;
+  status: string | null;
+  assignee: string | null;
+  sprint: string | null;
+  issue_type: string | null;
+  priority: string | null;
+}
+
+export interface JiraPreviewProject {
+  jira_id: string;
+  key: string;
+  name: string;
+  issues: JiraPreviewIssue[];
+}
+
+export interface JiraPreviewResponse {
+  projects: JiraPreviewProject[];
+  available_assignees: string[];
+  available_statuses: string[];
+  available_sprints: string[];
+}
+
+// GitHub Preview
+export interface GitHubPreviewIssue {
+  github_id: number;
+  number: number;
+  title: string;
+  state: string;
+  assignee: string | null;
+  author: string | null;
+  labels: string[];
+  is_pull_request: boolean;
+}
+
+export interface GitHubPreviewRepo {
+  full_name: string;
+  description: string | null;
+  language: string | null;
+  stars: number;
+  open_issues_count: number;
+  issues: GitHubPreviewIssue[];
+}
+
+export interface GitHubPreviewResponse {
+  repos: GitHubPreviewRepo[];
+  github_username: string;
+}
+
+// Confluence Preview
+export interface ConfluencePreviewSpace {
+  key: string;
+  name: string;
+  description: string;
+}
+
+export interface ConfluencePreviewPage {
+  confluence_page_id: string;
+  title: string;
+  space_key: string;
+  author: string | null;
+  last_updated: string | null;
+  last_updated_by: string | null;
+}
+
+export interface ConfluencePreviewResponse {
+  spaces: ConfluencePreviewSpace[];
+  pages: ConfluencePreviewPage[];
+}
+
+// Import Confirm
+export interface ImportConfirmResponse {
+  created: number;
+  updated: number;
+  detail: string;
+}
+
+export interface JiraConfirmProject {
+  jira_project_id: string;
+  jira_project_key: string;
+  name: string;
+  issue_ids: string[];
+}
+
+export interface GitHubConfirmRepo {
+  full_name: string;
+  target_project_id?: number | null;
+  create_new_project: boolean;
+  project_name?: string;
+  selected_issue_ids: number[];
+}
+
+export interface ConfluenceConfirmPage {
+  confluence_page_id: string;
+  space_key: string;
+  title: string;
+  analyze: boolean;
+}
+
 // API Responses
 export interface PaginatedResponse<T> {
   count: number;

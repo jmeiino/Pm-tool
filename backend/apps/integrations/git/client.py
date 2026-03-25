@@ -44,6 +44,12 @@ class GitHubClient:
 
         return all_items
 
+    def get_authenticated_user(self) -> dict:
+        """Authentifizierten GitHub-User abrufen."""
+        response = self.client.get("/user")
+        response.raise_for_status()
+        return response.json()
+
     def get_repos(self, org: str | None = None) -> list[dict]:
         """Repositories abrufen (eigene oder einer Organisation)."""
         url = f"/orgs/{org}/repos" if org else "/user/repos"

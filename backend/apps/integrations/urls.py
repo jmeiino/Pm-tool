@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .microsoft.views import microsoft_auth_callback, microsoft_auth_start
+from .import_views import ConfluenceImportViewSet, GitHubImportViewSet, JiraImportViewSet
 from .views import (
     CalendarEventViewSet,
     ConfluencePageViewSet,
@@ -18,6 +19,9 @@ router.register(r"confluence-pages", ConfluencePageViewSet, basename="confluence
 router.register(r"calendar-events", CalendarEventViewSet, basename="calendar-event")
 router.register(r"git-activities", GitActivityViewSet, basename="git-activity")
 router.register(r"repo-analyses", GitRepoAnalysisViewSet, basename="repo-analysis")
+router.register(r"import/jira", JiraImportViewSet, basename="import-jira")
+router.register(r"import/github", GitHubImportViewSet, basename="import-github")
+router.register(r"import/confluence", ConfluenceImportViewSet, basename="import-confluence")
 
 urlpatterns = [
     path("", include(router.urls)),
