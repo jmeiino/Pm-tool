@@ -40,6 +40,7 @@ LOCAL_APPS = [
     "apps.integrations",
     "apps.ai",
     "apps.notifications",
+    "apps.agents",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -74,6 +75,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+
+# Cache (Redis)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": config("REDIS_URL", default="redis://redis:6379/1"),
+        "TIMEOUT": 300,  # 5 Minuten Standard-TTL
+    }
+}
 
 # Database
 DATABASES = {

@@ -13,10 +13,12 @@ import { GitHubConnectDialog } from "@/components/integrations/GitHubConnectDial
 import { MicrosoftConnectDialog } from "@/components/integrations/MicrosoftConnectDialog";
 import { SyncStatusIndicator } from "@/components/integrations/SyncStatusIndicator";
 import {
+  ArrowDownTrayIcon,
   CheckIcon,
   EyeIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 // ---------------------------------------------------------------------------
 // Integration metadata
@@ -595,6 +597,15 @@ function IntegrationSection() {
               </div>
             );
           })}
+        </div>
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <Link
+            href="/import"
+            className="flex items-center gap-2 rounded-lg bg-primary-50 px-4 py-3 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Import-Wizard — Daten aus Integrationen selektiv importieren
+          </Link>
         </div>
       </Card>
 

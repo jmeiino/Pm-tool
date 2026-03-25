@@ -23,14 +23,21 @@ class Project(TimeStampedModel):
         ARCHIVED = "archived", "Archiviert"
         PAUSED = "paused", "Pausiert"
 
+    class Source(models.TextChoices):
+        MANUAL = "manual", "Manuell"
+        JIRA = "jira", "Jira"
+        GITHUB = "github", "GitHub"
+
     name = models.CharField(max_length=255)
     key = models.CharField(max_length=20, unique=True)
     description = models.TextField(blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_projects")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    source = models.CharField(max_length=20, choices=Source.choices, default=Source.MANUAL)
     is_synced = models.BooleanField(default=False, help_text="Wird mit Jira synchronisiert")
     jira_project_key = models.CharField(max_length=20, null=True, blank=True, unique=True)
     jira_project_id = models.CharField(max_length=50, null=True, blank=True)
+    github_repo_full_name = models.CharField(max_length=255, null=True, blank=True, unique=True)
     metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -109,6 +116,9 @@ class Issue(TimeStampedModel):
     jira_issue_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
     jira_issue_key = models.CharField(max_length=30, null=True, blank=True)
     jira_updated_at = models.DateTimeField(null=True, blank=True)
+    github_issue_id = models.IntegerField(null=True, blank=True, unique=True)
+    github_issue_number = models.IntegerField(null=True, blank=True)
+    github_repo_full_name = models.CharField(max_length=255, null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:

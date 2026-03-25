@@ -7,6 +7,7 @@ from apps.integrations.models import GitActivity, IntegrationConfig, SyncLog
 from apps.projects.models import Issue, Project
 
 from .client import GitHubClient
+from .mappers import github_issue_to_local, local_issue_to_github
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class GitHubSyncService:
     def __init__(self, integration: IntegrationConfig):
         self.integration = integration
         creds = integration.credentials
-        self.client = GitHubClient(token=creds.get("token", ""))
+        self.client = GitHubClient(token=creds.get("token", creds.get("access_token", "")))
 
     def sync_commits(self, project: Project, owner: str, repo: str) -> int:
         """Commits synchronisieren."""
@@ -84,6 +85,44 @@ class GitHubSyncService:
 
         return created
 
+    def sync_issues(self, project: Project, owner: str, repo: str) -> tuple[int, int]:
+        """GitHub Issues synchronisieren (nur für Projekte mit importierten Issues)."""
+        full_name = f"{owner}/{repo}"
+
+        # Nur synchronisieren wenn es bereits importierte GitHub Issues gibt
+        has_github_issues = Issue.objects.filter(
+            project=project, github_repo_full_name=full_name
+        ).exists()
+        if not has_github_issues:
+            return 0, 0
+
+        gh_issues = self.client.get_issues(owner, repo, state="all")
+        created = 0
+        updated = 0
+
+        for gh_issue in gh_issues:
+            github_id = gh_issue.get("id")
+            if not github_id:
+                continue
+
+            # Nur Issues aktualisieren die bereits importiert wurden
+            existing = Issue.objects.filter(github_issue_id=github_id).first()
+            if not existing:
+                continue
+
+            local_data = github_issue_to_local(gh_issue, project, full_name)
+            github_issue_id = local_data.pop("github_issue_id")
+            _, was_created = Issue.objects.update_or_create(
+                github_issue_id=github_issue_id,
+                defaults=local_data,
+            )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        return created, updated
+
     def sync_inbound(self) -> SyncLog:
         """Eingehender Sync: GitHub -> lokal."""
         sync_log = SyncLog.objects.create(
@@ -94,6 +133,7 @@ class GitHubSyncService:
         )
 
         total_created = 0
+        total_updated = 0
         errors = []
 
         try:
@@ -110,6 +150,9 @@ class GitHubSyncService:
                     project = Project.objects.get(id=project_id)
                     total_created += self.sync_commits(project, owner, repo)
                     total_created += self.sync_pull_requests(project, owner, repo)
+                    issues_created, issues_updated = self.sync_issues(project, owner, repo)
+                    total_created += issues_created
+                    total_updated += issues_updated
                 except Project.DoesNotExist:
                     errors.append(f"Projekt {project_id} nicht gefunden")
                 except Exception as e:
@@ -120,8 +163,163 @@ class GitHubSyncService:
             sync_log.status = SyncLog.Status.FAILED
             errors.append(str(e))
 
-        sync_log.records_processed = total_created
+        sync_log.records_processed = total_created + total_updated
         sync_log.records_created = total_created
+        sync_log.records_updated = total_updated
+        sync_log.errors = errors
+        sync_log.completed_at = timezone.now()
+        sync_log.save()
+
+        return sync_log
+
+    def detect_conflicts(self, project: Project, owner: str, repo: str) -> list[dict]:
+        """Konflikte erkennen: lokal UND remote geänderte Issues seit letztem Sync."""
+        if not self.integration.last_synced_at:
+            return []
+
+        full_name = f"{owner}/{repo}"
+        last_sync = self.integration.last_synced_at
+
+        # Lokal geänderte Issues
+        locally_changed = Issue.objects.filter(
+            project=project,
+            github_issue_id__isnull=False,
+            github_issue_number__isnull=False,
+            github_repo_full_name=full_name,
+            updated_at__gt=last_sync,
+        )
+
+        if not locally_changed.exists():
+            return []
+
+        # Remote Issues holen
+        try:
+            gh_issues = self.client.get_issues(owner, repo, state="all")
+        except Exception:
+            logger.warning("Fehler beim Laden der Issues für Konflikterkennung: %s/%s", owner, repo)
+            return []
+
+        gh_issues_by_id = {i["id"]: i for i in gh_issues}
+        conflicts = []
+
+        for issue in locally_changed:
+            gh_issue = gh_issues_by_id.get(issue.github_issue_id)
+            if not gh_issue:
+                continue
+
+            # Remote updated_at prüfen
+            gh_updated = gh_issue.get("updated_at", "")
+            if not gh_updated:
+                continue
+
+            from django.utils.dateparse import parse_datetime
+            gh_updated_dt = parse_datetime(gh_updated)
+            if gh_updated_dt and gh_updated_dt > last_sync:
+                # Beide Seiten haben sich geändert → Konflikt
+                local_title = issue.title
+                remote_title = gh_issue.get("title", "")
+                local_status = issue.status
+                remote_state = gh_issue.get("state", "")
+
+                conflicts.append({
+                    "issue_key": issue.key,
+                    "github_issue_number": issue.github_issue_number,
+                    "local_title": local_title,
+                    "remote_title": remote_title,
+                    "local_status": local_status,
+                    "remote_state": remote_state,
+                    "local_updated": issue.updated_at.isoformat(),
+                    "remote_updated": gh_updated,
+                    "has_title_conflict": local_title != remote_title,
+                    "has_status_conflict": (
+                        local_status in ("done",) and remote_state == "open"
+                    ) or (
+                        local_status in ("to_do", "in_progress") and remote_state == "closed"
+                    ),
+                })
+
+        return conflicts
+
+    def sync_outbound(self) -> SyncLog:
+        """Ausgehender Sync: lokal geänderte GitHub Issues -> GitHub."""
+        sync_log = SyncLog.objects.create(
+            integration=self.integration,
+            direction=SyncLog.Direction.OUTBOUND,
+            status=SyncLog.Status.STARTED,
+            started_at=timezone.now(),
+        )
+
+        total_updated = 0
+        total_created = 0
+        errors = []
+
+        try:
+            repos = self.integration.settings.get("repos", [])
+            for repo_config in repos:
+                owner = repo_config.get("owner", "")
+                repo = repo_config.get("repo", "")
+                project_id = repo_config.get("project_id")
+
+                if not (owner and repo and project_id):
+                    continue
+
+                try:
+                    project = Project.objects.get(id=project_id)
+                except Project.DoesNotExist:
+                    errors.append(f"Projekt {project_id} nicht gefunden")
+                    continue
+
+                full_name = f"{owner}/{repo}"
+
+                # Bestehende GitHub Issues aktualisieren
+                if self.integration.last_synced_at:
+                    changed_issues = Issue.objects.filter(
+                        project=project,
+                        github_issue_id__isnull=False,
+                        github_issue_number__isnull=False,
+                        github_repo_full_name=full_name,
+                        updated_at__gt=self.integration.last_synced_at,
+                    )
+                    for issue in changed_issues:
+                        try:
+                            payload = local_issue_to_github(issue)
+                            self.client.update_issue(owner, repo, issue.github_issue_number, payload)
+                            total_updated += 1
+                        except Exception as e:
+                            errors.append(f"Fehler beim Update von {issue.key}: {str(e)}")
+
+                # Neue lokale Issues nach GitHub pushen
+                new_issues = Issue.objects.filter(
+                    project=project,
+                    github_issue_id__isnull=True,
+                    github_repo_full_name=full_name,
+                )
+                for issue in new_issues:
+                    try:
+                        payload = local_issue_to_github(issue)
+                        result = self.client.create_issue(
+                            owner, repo,
+                            title=payload["title"],
+                            body=payload.get("body", ""),
+                            labels=payload.get("labels"),
+                        )
+                        issue.github_issue_id = result.get("id")
+                        issue.github_issue_number = result.get("number")
+                        issue.save(update_fields=[
+                            "github_issue_id", "github_issue_number", "updated_at"
+                        ])
+                        total_created += 1
+                    except Exception as e:
+                        errors.append(f"Fehler beim Erstellen von {issue.key}: {str(e)}")
+
+            sync_log.status = SyncLog.Status.COMPLETED
+        except Exception as e:
+            sync_log.status = SyncLog.Status.FAILED
+            errors.append(str(e))
+
+        sync_log.records_processed = total_created + total_updated
+        sync_log.records_created = total_created
+        sync_log.records_updated = total_updated
         sync_log.errors = errors
         sync_log.completed_at = timezone.now()
         sync_log.save()
