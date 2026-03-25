@@ -7,6 +7,7 @@ from apps.integrations.models import GitActivity, IntegrationConfig, SyncLog
 from apps.projects.models import Issue, Project
 
 from .client import GitHubClient
+from .mappers import github_issue_to_local
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class GitHubSyncService:
     def __init__(self, integration: IntegrationConfig):
         self.integration = integration
         creds = integration.credentials
-        self.client = GitHubClient(token=creds.get("token", ""))
+        self.client = GitHubClient(token=creds.get("token", creds.get("access_token", "")))
 
     def sync_commits(self, project: Project, owner: str, repo: str) -> int:
         """Commits synchronisieren."""
@@ -84,6 +85,44 @@ class GitHubSyncService:
 
         return created
 
+    def sync_issues(self, project: Project, owner: str, repo: str) -> tuple[int, int]:
+        """GitHub Issues synchronisieren (nur für Projekte mit importierten Issues)."""
+        full_name = f"{owner}/{repo}"
+
+        # Nur synchronisieren wenn es bereits importierte GitHub Issues gibt
+        has_github_issues = Issue.objects.filter(
+            project=project, github_repo_full_name=full_name
+        ).exists()
+        if not has_github_issues:
+            return 0, 0
+
+        gh_issues = self.client.get_issues(owner, repo, state="all")
+        created = 0
+        updated = 0
+
+        for gh_issue in gh_issues:
+            github_id = gh_issue.get("id")
+            if not github_id:
+                continue
+
+            # Nur Issues aktualisieren die bereits importiert wurden
+            existing = Issue.objects.filter(github_issue_id=github_id).first()
+            if not existing:
+                continue
+
+            local_data = github_issue_to_local(gh_issue, project, full_name)
+            github_issue_id = local_data.pop("github_issue_id")
+            _, was_created = Issue.objects.update_or_create(
+                github_issue_id=github_issue_id,
+                defaults=local_data,
+            )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        return created, updated
+
     def sync_inbound(self) -> SyncLog:
         """Eingehender Sync: GitHub -> lokal."""
         sync_log = SyncLog.objects.create(
@@ -94,6 +133,7 @@ class GitHubSyncService:
         )
 
         total_created = 0
+        total_updated = 0
         errors = []
 
         try:
@@ -110,6 +150,9 @@ class GitHubSyncService:
                     project = Project.objects.get(id=project_id)
                     total_created += self.sync_commits(project, owner, repo)
                     total_created += self.sync_pull_requests(project, owner, repo)
+                    issues_created, issues_updated = self.sync_issues(project, owner, repo)
+                    total_created += issues_created
+                    total_updated += issues_updated
                 except Project.DoesNotExist:
                     errors.append(f"Projekt {project_id} nicht gefunden")
                 except Exception as e:
@@ -120,8 +163,9 @@ class GitHubSyncService:
             sync_log.status = SyncLog.Status.FAILED
             errors.append(str(e))
 
-        sync_log.records_processed = total_created
+        sync_log.records_processed = total_created + total_updated
         sync_log.records_created = total_created
+        sync_log.records_updated = total_updated
         sync_log.errors = errors
         sync_log.completed_at = timezone.now()
         sync_log.save()

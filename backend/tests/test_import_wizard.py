@@ -152,12 +152,26 @@ class TestJiraImport:
         )
 
     @patch("apps.integrations.jira.client.JiraClient")
-    def test_jira_preview(self, MockJiraClient, api_client, jira_integration):
+    def test_jira_preview_projects(self, MockJiraClient, api_client, jira_integration):
+        """Preview ohne project_key liefert nur Projekte (Lazy Loading)."""
         mock_client = MagicMock()
         MockJiraClient.return_value = mock_client
         mock_client.get_projects.return_value = [
             {"id": "10001", "key": "PROJ", "name": "Test Project"},
         ]
+
+        response = api_client.get("/api/v1/integrations/import/jira/preview/")
+        assert response.status_code == 200
+        data = response.data
+        assert len(data["projects"]) == 1
+        assert data["projects"][0]["key"] == "PROJ"
+        assert data["projects"][0]["issues"] == []  # Issues noch nicht geladen
+
+    @patch("apps.integrations.jira.client.JiraClient")
+    def test_jira_preview_issues_lazy(self, MockJiraClient, api_client, jira_integration):
+        """Preview mit project_key lädt Issues lazy nach."""
+        mock_client = MagicMock()
+        MockJiraClient.return_value = mock_client
         mock_client.get_issues.return_value = [
             {
                 "id": "20001",
@@ -173,11 +187,9 @@ class TestJiraImport:
             },
         ]
 
-        response = api_client.get("/api/v1/integrations/import/jira/preview/")
+        response = api_client.get("/api/v1/integrations/import/jira/preview/?project_key=PROJ")
         assert response.status_code == 200
         data = response.data
-        assert len(data["projects"]) == 1
-        assert data["projects"][0]["key"] == "PROJ"
         assert len(data["projects"][0]["issues"]) == 1
         assert data["projects"][0]["issues"][0]["summary"] == "Task eins"
         assert "Max Mustermann" in data["available_assignees"]
@@ -590,6 +602,97 @@ class TestConfluenceImport:
         page = ConfluencePage.objects.get(confluence_page_id="12345")
         assert page.title == "Meeting Notes"
         assert page.space_key == "DEV"
+
+
+# ─── GitHub Sync Issue Update Tests ───────────────────────────────────────────
+
+
+@pytest.mark.django_db
+class TestGitHubSyncIssues:
+    """Tests für laufende GitHub Issue Synchronisation."""
+
+    @patch("apps.integrations.git.sync.GitHubClient")
+    def test_sync_issues_updates_existing(self, MockGitHubClient, user):
+        """sync_issues aktualisiert nur bereits importierte Issues."""
+        project = ProjectFactory(owner=user, github_repo_full_name="testuser/repo")
+        # Erstelle ein bereits importiertes Issue
+        Issue.objects.create(
+            project=project,
+            title="Old Title",
+            key=f"{project.key}-1",
+            github_issue_id=30001,
+            github_issue_number=1,
+            github_repo_full_name="testuser/repo",
+            status="to_do",
+        )
+
+        mock_client = MagicMock()
+        MockGitHubClient.return_value = mock_client
+        mock_client.get_issues.return_value = [
+            {
+                "id": 30001,
+                "number": 1,
+                "title": "Updated Title",
+                "body": "Updated body",
+                "state": "closed",
+                "labels": [{"name": "bug"}],
+            },
+            {
+                "id": 30002,
+                "number": 2,
+                "title": "New Issue (should be ignored)",
+                "body": "",
+                "state": "open",
+                "labels": [],
+            },
+        ]
+
+        integration = IntegrationConfigFactory(
+            user=user,
+            integration_type="github",
+            is_enabled=True,
+            credentials={"token": "ghp_test"},
+            settings={"repos": [{"owner": "testuser", "repo": "repo", "project_id": project.id}]},
+        )
+
+        from apps.integrations.git.sync import GitHubSyncService
+
+        service = GitHubSyncService(integration)
+        created, updated = service.sync_issues(project, "testuser", "repo")
+
+        assert created == 0
+        assert updated == 1
+
+        issue = Issue.objects.get(github_issue_id=30001)
+        assert issue.title == "Updated Title"
+        assert issue.status == "done"
+
+        # Issue 30002 sollte NICHT importiert worden sein
+        assert not Issue.objects.filter(github_issue_id=30002).exists()
+
+    @patch("apps.integrations.git.sync.GitHubClient")
+    def test_sync_issues_skips_without_imported(self, MockGitHubClient, user):
+        """sync_issues überspringt Projekte ohne importierte GitHub Issues."""
+        project = ProjectFactory(owner=user)
+
+        mock_client = MagicMock()
+        MockGitHubClient.return_value = mock_client
+
+        integration = IntegrationConfigFactory(
+            user=user,
+            integration_type="github",
+            is_enabled=True,
+            credentials={"token": "ghp_test"},
+        )
+
+        from apps.integrations.git.sync import GitHubSyncService
+
+        service = GitHubSyncService(integration)
+        created, updated = service.sync_issues(project, "testuser", "repo")
+
+        assert created == 0
+        assert updated == 0
+        mock_client.get_issues.assert_not_called()
 
 
 # ─── Model Tests ─────────────────────────────────────────────────────────────

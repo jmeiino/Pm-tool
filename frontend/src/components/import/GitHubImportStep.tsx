@@ -8,18 +8,17 @@ import { useGitHubPreview, useGitHubConfirmImport } from "@/hooks/useImport";
 import { useProjects } from "@/hooks/useProjects";
 import { useImportWizardStore } from "@/stores/useImportWizardStore";
 import { ImportConfirmDialog } from "./ImportConfirmDialog";
-import { ImportResultSummary } from "./ImportResultSummary";
+import { useToast } from "@/components/ui/Toast";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import type { ImportConfirmResponse } from "@/lib/types";
 
 export function GitHubImportStep() {
   const store = useImportWizardStore();
   const { data, isLoading, error } = useGitHubPreview(store.githubMineOnly);
   const { data: projectsData } = useProjects();
   const confirmImport = useGitHubConfirmImport();
+  const { addToast } = useToast();
   const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set());
   const [showConfirm, setShowConfirm] = useState(false);
-  const [importResult, setImportResult] = useState<ImportConfirmResponse | null>(null);
 
   const projects = projectsData?.results || [];
 
@@ -49,7 +48,11 @@ export function GitHubImportStep() {
 
     confirmImport.mutate(repos, {
       onSuccess: (result) => {
-        setImportResult(result);
+        addToast("success", `GitHub-Import: ${result.detail}`);
+        setShowConfirm(false);
+      },
+      onError: (err) => {
+        addToast("error", `GitHub-Import fehlgeschlagen: ${(err as Error).message}`);
         setShowConfirm(false);
       },
     });
@@ -70,10 +73,6 @@ export function GitHubImportStep() {
         Fehler beim Laden der GitHub-Daten: {(error as Error).message}
       </div>
     );
-  }
-
-  if (importResult) {
-    return <ImportResultSummary result={importResult} onDismiss={() => setImportResult(null)} />;
   }
 
   const selectedCount = store.githubSelectedRepos.size;

@@ -60,7 +60,7 @@ class JiraImportViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def preview(self, request):
-        """Alle Jira-Projekte + Issues laden (ohne DB-Write)."""
+        """Jira-Projekte laden. Mit ?project_key=X Issues lazy nachladen."""
         integration = _get_integration(request.user, IntegrationConfig.IntegrationType.JIRA)
         if not integration:
             return Response(
@@ -73,6 +73,13 @@ class JiraImportViewSet(viewsets.ViewSet):
         creds = integration.credentials
         client = JiraClient(url=creds["url"], email=creds["email"], api_token=creds["api_token"])
 
+        project_key_param = request.query_params.get("project_key")
+
+        if project_key_param:
+            # Lazy Loading: Issues für ein einzelnes Projekt laden
+            return self._preview_project_issues(client, project_key_param)
+
+        # Standard: Nur Projekte laden (schnell)
         try:
             jira_projects = client.get_projects()
         except Exception:
@@ -82,64 +89,83 @@ class JiraImportViewSet(viewsets.ViewSet):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        all_assignees = set()
-        all_statuses = set()
-        all_sprints = set()
         projects_data = []
-
         for jp in jira_projects:
-            project_key = jp.get("key", "")
-            try:
-                issues_raw = client.get_issues(project_key)
-            except Exception:
-                logger.warning("Fehler beim Laden der Issues für %s", project_key)
-                issues_raw = []
-
-            issues_data = []
-            for issue in issues_raw:
-                fields = issue.get("fields", {})
-                assignee_name = None
-                if fields.get("assignee"):
-                    assignee_name = fields["assignee"].get("displayName") or fields["assignee"].get("emailAddress")
-                    if assignee_name:
-                        all_assignees.add(assignee_name)
-
-                status_name = None
-                if fields.get("status"):
-                    status_name = fields["status"].get("name")
-                    if status_name:
-                        all_statuses.add(status_name)
-
-                sprint_name = None
-                if fields.get("sprint"):
-                    sprint_name = fields["sprint"].get("name")
-                    if sprint_name:
-                        all_sprints.add(sprint_name)
-
-                issue_type_name = None
-                if fields.get("issuetype"):
-                    issue_type_name = fields["issuetype"].get("name")
-
-                issues_data.append({
-                    "jira_id": issue.get("id", ""),
-                    "key": issue.get("key", ""),
-                    "summary": fields.get("summary", ""),
-                    "status": status_name,
-                    "assignee": assignee_name,
-                    "sprint": sprint_name,
-                    "issue_type": issue_type_name,
-                    "priority": fields.get("priority", {}).get("name") if fields.get("priority") else None,
-                })
-
             projects_data.append({
                 "jira_id": jp.get("id", ""),
-                "key": project_key,
+                "key": jp.get("key", ""),
                 "name": jp.get("name", ""),
-                "issues": issues_data,
+                "issues": [],  # Issues werden lazy per project_key nachgeladen
             })
 
         response_data = {
             "projects": projects_data,
+            "available_assignees": [],
+            "available_statuses": [],
+            "available_sprints": [],
+        }
+
+        serializer = JiraPreviewResponseSerializer(response_data)
+        return Response(serializer.data)
+
+    def _preview_project_issues(self, client, project_key: str):
+        """Issues eines einzelnen Jira-Projekts laden (Lazy Loading)."""
+        try:
+            issues_raw = client.get_issues(project_key)
+        except Exception:
+            logger.exception("Fehler beim Laden der Issues für %s", project_key)
+            return Response(
+                {"detail": f"Fehler beim Laden der Issues für {project_key}."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        all_assignees = set()
+        all_statuses = set()
+        all_sprints = set()
+        issues_data = []
+
+        for issue in issues_raw:
+            fields = issue.get("fields", {})
+            assignee_name = None
+            if fields.get("assignee"):
+                assignee_name = fields["assignee"].get("displayName") or fields["assignee"].get("emailAddress")
+                if assignee_name:
+                    all_assignees.add(assignee_name)
+
+            status_name = None
+            if fields.get("status"):
+                status_name = fields["status"].get("name")
+                if status_name:
+                    all_statuses.add(status_name)
+
+            sprint_name = None
+            if fields.get("sprint"):
+                sprint_name = fields["sprint"].get("name")
+                if sprint_name:
+                    all_sprints.add(sprint_name)
+
+            issue_type_name = None
+            if fields.get("issuetype"):
+                issue_type_name = fields["issuetype"].get("name")
+
+            issues_data.append({
+                "jira_id": issue.get("id", ""),
+                "key": issue.get("key", ""),
+                "summary": fields.get("summary", ""),
+                "status": status_name,
+                "assignee": assignee_name,
+                "sprint": sprint_name,
+                "issue_type": issue_type_name,
+                "priority": fields.get("priority", {}).get("name") if fields.get("priority") else None,
+            })
+
+        response_data = {
+            "projects": [{
+                "jira_id": "",
+                "key": project_key,
+                "name": project_key,
+                "issues": issues_data,
+            }],
             "available_assignees": sorted(all_assignees),
             "available_statuses": sorted(all_statuses),
             "available_sprints": sorted(all_sprints),

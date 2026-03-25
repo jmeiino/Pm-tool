@@ -26,6 +26,20 @@ export function useJiraPreview(enabled = true) {
   });
 }
 
+export function useJiraProjectIssues(projectKey: string, enabled = true) {
+  return useQuery({
+    queryKey: ["import", "jira", "issues", projectKey],
+    queryFn: async () => {
+      const { data } = await api.get<JiraPreviewResponse>(
+        `/integrations/import/jira/preview/?project_key=${projectKey}`
+      );
+      return data;
+    },
+    enabled: enabled && !!projectKey,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useJiraConfirmImport() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -110,6 +124,34 @@ export function useConfluencePagesPreview(
     },
     enabled: enabled && !!spaceKey,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useConfluenceActionItems(pageIds: number[], enabled = true) {
+  return useQuery({
+    queryKey: ["import", "confluence", "action-items", pageIds],
+    queryFn: async () => {
+      // Lade die analysierten Seiten über die bestehende API
+      const results = await Promise.all(
+        pageIds.map(async (id) => {
+          const { data } = await api.get(`/integrations/confluence-pages/${id}/`);
+          return data as {
+            id: number;
+            title: string;
+            ai_action_items: string[];
+            ai_processed_at: string | null;
+          };
+        })
+      );
+      return results.filter((p) => p.ai_action_items && p.ai_action_items.length > 0);
+    },
+    enabled: enabled && pageIds.length > 0,
+    refetchInterval: (query) => {
+      // Solange Seiten noch nicht analysiert sind, alle 5 Sekunden pollen
+      const data = query.state.data;
+      if (!data || data.length < pageIds.length) return 5000;
+      return false;
+    },
   });
 }
 
