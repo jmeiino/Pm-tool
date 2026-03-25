@@ -223,6 +223,67 @@ export interface ConfluencePage {
   updated_at: string;
 }
 
+// ─── Agent Company Types ─────────────────────────────────────────────────────
+
+export interface AgentProfile {
+  id: number;
+  external_id: string;
+  name: string;
+  role: "ceo" | "department_head" | "specialist" | "qa";
+  role_display: string;
+  department: string;
+  avatar_color: string;
+  capabilities: string[];
+  ai_provider: string;
+  status: "idle" | "working" | "waiting" | "offline";
+  status_display: string;
+}
+
+export interface AgentMessage {
+  id: number;
+  task: number;
+  sender_agent: number | null;
+  sender_user: number | null;
+  sender_name: string;
+  sender_type: "agent" | "user" | "system";
+  sender_avatar_color: string;
+  message_type: "text" | "decision" | "question" | "handoff" | "status_change" | "deliverable" | "error" | "system";
+  content: string;
+  metadata: Record<string, unknown>;
+  is_decision_pending: boolean;
+  parent_message: number | null;
+  created_at: string;
+}
+
+export interface AgentTask {
+  id: number;
+  issue: number;
+  issue_key: string;
+  issue_title: string;
+  external_task_id: string;
+  status: "pending" | "assigned" | "in_progress" | "review" | "needs_input" | "completed" | "failed" | "cancelled";
+  status_display: string;
+  assigned_agent: number | null;
+  assigned_agent_name: string | null;
+  priority: number;
+  task_type: string;
+  result_summary: string;
+  deliverables: Array<{ type: string; url: string; name: string }>;
+  estimated_completion: string | null;
+  message_count: number;
+  pending_decisions: number;
+  messages?: AgentMessage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentCompanyStatus {
+  company_name: string;
+  agents: AgentProfile[];
+  active_task_count: number;
+  pending_decisions: number;
+}
+
 // ─── Import Wizard Types ─────────────────────────────────────────────────────
 
 // Jira Preview
