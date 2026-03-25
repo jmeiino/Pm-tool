@@ -71,6 +71,21 @@ class GitHubClient:
         all_items = self._paginate(f"/repos/{owner}/{repo}/issues", {"state": state})
         return [item for item in all_items if "pull_request" not in item]
 
+    def create_issue(self, owner: str, repo: str, title: str, body: str = "", labels: list[str] | None = None) -> dict:
+        """Neues Issue in einem Repository erstellen."""
+        payload: dict = {"title": title, "body": body}
+        if labels:
+            payload["labels"] = labels
+        response = self.client.post(f"/repos/{owner}/{repo}/issues", json=payload)
+        response.raise_for_status()
+        return response.json()
+
+    def update_issue(self, owner: str, repo: str, issue_number: int, payload: dict) -> dict:
+        """Bestehendes Issue aktualisieren."""
+        response = self.client.patch(f"/repos/{owner}/{repo}/issues/{issue_number}", json=payload)
+        response.raise_for_status()
+        return response.json()
+
     def get_repo(self, owner: str, repo: str) -> dict:
         """Repository-Metadaten abrufen."""
         response = self.client.get(f"/repos/{owner}/{repo}")

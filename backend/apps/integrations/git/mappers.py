@@ -56,3 +56,33 @@ def github_issue_to_local(gh_issue: dict, project, repo_full_name: str) -> dict:
         "github_issue_number": gh_issue.get("number"),
         "github_repo_full_name": repo_full_name,
     }
+
+
+LOCAL_STATUS_TO_GITHUB_STATE = {
+    "to_do": "open",
+    "in_progress": "open",
+    "in_review": "open",
+    "done": "closed",
+}
+
+LOCAL_TYPE_TO_GITHUB_LABEL = {
+    Issue.IssueType.BUG: "bug",
+    Issue.IssueType.STORY: "enhancement",
+    Issue.IssueType.EPIC: "epic",
+}
+
+
+def local_issue_to_github(issue) -> dict:
+    """Map lokales Issue auf GitHub Issue Update-Payload."""
+    payload: dict = {
+        "title": issue.title,
+        "body": issue.description or "",
+        "state": LOCAL_STATUS_TO_GITHUB_STATE.get(issue.status, "open"),
+    }
+
+    # Labels aus Issue-Typ ableiten
+    label = LOCAL_TYPE_TO_GITHUB_LABEL.get(issue.issue_type)
+    if label:
+        payload["labels"] = [label]
+
+    return payload

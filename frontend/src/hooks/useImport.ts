@@ -10,6 +10,69 @@ import type {
   ConfluenceConfirmPage,
 } from "@/lib/types";
 
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+
+export interface ImportHistoryEntry {
+  integration_id: number;
+  integration_type: string;
+  is_enabled: boolean;
+  last_synced_at: string | null;
+  sync_status: string;
+  item_count: number;
+  poll_interval: number | null;
+  recent_logs: {
+    id: number;
+    direction: string;
+    status: string;
+    records_created: number;
+    records_updated: number;
+    errors: string[];
+    started_at: string | null;
+    completed_at: string | null;
+  }[];
+}
+
+export function useImportDashboard(enabled = true) {
+  return useQuery({
+    queryKey: ["import", "dashboard"],
+    queryFn: async () => {
+      const { data } = await api.get<{ integrations: ImportHistoryEntry[] }>(
+        "/integrations/import/dashboard/history/"
+      );
+      return data;
+    },
+    enabled,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useGitHubConflicts(enabled = true) {
+  return useQuery({
+    queryKey: ["import", "github", "conflicts"],
+    queryFn: async () => {
+      const { data } = await api.get<{ conflicts: Record<string, unknown>[]; count: number }>(
+        "/integrations/import/github/conflicts/"
+      );
+      return data;
+    },
+    enabled,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useUpdateSyncSchedule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { integration_id: number; poll_interval: number }) => {
+      const { data } = await api.post("/integrations/import/dashboard/update-schedule/", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["import", "dashboard"] });
+    },
+  });
+}
+
 // ─── Jira ────────────────────────────────────────────────────────────────────
 
 export function useJiraPreview(enabled = true) {

@@ -20,13 +20,15 @@ class ProjectSerializer(serializers.ModelSerializer):
             "key",
             "description",
             "status",
+            "source",
             "is_synced",
             "jira_project_key",
+            "github_repo_full_name",
             "issue_count",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at", "source"]
 
 
 class SprintSerializer(serializers.ModelSerializer):
@@ -146,6 +148,9 @@ class IssueDetailSerializer(serializers.ModelSerializer):
             "subtasks",
             "jira_issue_key",
             "jira_updated_at",
+            "github_issue_id",
+            "github_issue_number",
+            "github_repo_full_name",
             "metadata",
             "created_at",
             "updated_at",

@@ -3,6 +3,7 @@
 import logging
 import re
 
+from django.core.cache import cache
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -34,6 +35,14 @@ def _get_integration(user, integration_type: str) -> IntegrationConfig | None:
         )
     except IntegrationConfig.DoesNotExist:
         return None
+
+
+PREVIEW_CACHE_TTL = 300  # 5 Minuten
+
+
+def _cache_key(user_id: int, integration_type: str, extra: str = "") -> str:
+    """Generiere einen Cache-Key für Preview-Daten."""
+    return f"import_preview:{user_id}:{integration_type}:{extra}"
 
 
 def _make_project_key(name: str) -> str:
@@ -79,7 +88,12 @@ class JiraImportViewSet(viewsets.ViewSet):
             # Lazy Loading: Issues für ein einzelnes Projekt laden
             return self._preview_project_issues(client, project_key_param)
 
-        # Standard: Nur Projekte laden (schnell)
+        # Standard: Nur Projekte laden (schnell), mit Cache
+        ck = _cache_key(request.user.id, "jira", "projects")
+        cached = cache.get(ck)
+        if cached:
+            return Response(cached)
+
         try:
             jira_projects = client.get_projects()
         except Exception:
@@ -95,7 +109,7 @@ class JiraImportViewSet(viewsets.ViewSet):
                 "jira_id": jp.get("id", ""),
                 "key": jp.get("key", ""),
                 "name": jp.get("name", ""),
-                "issues": [],  # Issues werden lazy per project_key nachgeladen
+                "issues": [],
             })
 
         response_data = {
@@ -106,6 +120,7 @@ class JiraImportViewSet(viewsets.ViewSet):
         }
 
         serializer = JiraPreviewResponseSerializer(response_data)
+        cache.set(ck, serializer.data, PREVIEW_CACHE_TTL)
         return Response(serializer.data)
 
     def _preview_project_issues(self, client, project_key: str):
@@ -266,6 +281,12 @@ class GitHubImportViewSet(viewsets.ViewSet):
         creds = integration.credentials
         client = GitHubClient(token=creds.get("token", creds.get("access_token", "")))
 
+        mine_only = request.query_params.get("mine_only", "").lower() == "true"
+        ck = _cache_key(request.user.id, "github", f"mine={mine_only}")
+        cached = cache.get(ck)
+        if cached:
+            return Response(cached)
+
         try:
             gh_user = client.get_authenticated_user()
             github_username = gh_user.get("login", "")
@@ -285,7 +306,6 @@ class GitHubImportViewSet(viewsets.ViewSet):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        mine_only = request.query_params.get("mine_only", "").lower() == "true"
         repos_data = []
 
         for repo in repos:
@@ -332,6 +352,7 @@ class GitHubImportViewSet(viewsets.ViewSet):
         }
 
         serializer = GitHubPreviewResponseSerializer(response_data)
+        cache.set(ck, serializer.data, PREVIEW_CACHE_TTL)
         return Response(serializer.data)
 
     @action(detail=False, methods=["post"])
@@ -428,6 +449,135 @@ class GitHubImportViewSet(viewsets.ViewSet):
             "detail": f"{created_count} erstellt, {updated_count} aktualisiert.",
         })
         return Response(response.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["get"])
+    def conflicts(self, request):
+        """Konflikte zwischen lokal und GitHub erkennen."""
+        integration = _get_integration(request.user, IntegrationConfig.IntegrationType.GITHUB)
+        if not integration:
+            return Response(
+                {"detail": "Keine aktive GitHub-Integration gefunden."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from apps.integrations.git.sync import GitHubSyncService
+
+        service = GitHubSyncService(integration)
+        all_conflicts = []
+
+        repos = integration.settings.get("repos", [])
+        for repo_config in repos:
+            owner = repo_config.get("owner", "")
+            repo = repo_config.get("repo", "")
+            project_id = repo_config.get("project_id")
+
+            if not (owner and repo and project_id):
+                continue
+
+            try:
+                project = Project.objects.get(id=project_id)
+                conflicts = service.detect_conflicts(project, owner, repo)
+                all_conflicts.extend(conflicts)
+            except Project.DoesNotExist:
+                continue
+            except Exception as e:
+                logger.warning("Fehler bei Konflikterkennung für %s/%s: %s", owner, repo, e)
+
+        return Response({"conflicts": all_conflicts, "count": len(all_conflicts)})
+
+
+# ─── Import Dashboard ─────────────────────────────────────────────────────────
+
+
+class ImportDashboardViewSet(viewsets.ViewSet):
+    """Import-Historie und Dashboard-Daten."""
+
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=["get"])
+    def history(self, request):
+        """Import-Historie: letzte Sync-Logs pro Integration."""
+        from apps.integrations.models import SyncLog
+
+        integrations = IntegrationConfig.objects.filter(user=request.user, is_enabled=True)
+        history = []
+
+        for integration in integrations:
+            latest_logs = SyncLog.objects.filter(
+                integration=integration
+            ).order_by("-started_at")[:5]
+
+            # Zähle importierte Elemente
+            from apps.projects.models import Project as ProjectModel
+
+            if integration.integration_type == "jira":
+                item_count = ProjectModel.objects.filter(
+                    source="jira", owner=request.user
+                ).count()
+            elif integration.integration_type == "github":
+                item_count = ProjectModel.objects.filter(
+                    source="github", owner=request.user
+                ).count()
+            else:
+                from apps.integrations.models import ConfluencePage
+
+                settings = integration.settings or {}
+                spaces = settings.get("spaces", [])
+                item_count = ConfluencePage.objects.filter(space_key__in=spaces).count() if spaces else 0
+
+            history.append({
+                "integration_id": integration.id,
+                "integration_type": integration.integration_type,
+                "is_enabled": integration.is_enabled,
+                "last_synced_at": integration.last_synced_at.isoformat() if integration.last_synced_at else None,
+                "sync_status": integration.sync_status,
+                "item_count": item_count,
+                "poll_interval": (integration.settings or {}).get("poll_interval"),
+                "recent_logs": [
+                    {
+                        "id": log.id,
+                        "direction": log.direction,
+                        "status": log.status,
+                        "records_created": log.records_created,
+                        "records_updated": log.records_updated,
+                        "errors": log.errors,
+                        "started_at": log.started_at.isoformat() if log.started_at else None,
+                        "completed_at": log.completed_at.isoformat() if log.completed_at else None,
+                    }
+                    for log in latest_logs
+                ],
+            })
+
+        return Response({"integrations": history})
+
+    @action(detail=False, methods=["post"], url_path="update-schedule")
+    def update_schedule(self, request):
+        """Sync-Intervall für eine Integration aktualisieren."""
+        integration_id = request.data.get("integration_id")
+        poll_interval = request.data.get("poll_interval")  # in Minuten
+
+        if not integration_id or poll_interval is None:
+            return Response(
+                {"detail": "integration_id und poll_interval sind erforderlich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            integration = IntegrationConfig.objects.get(
+                id=integration_id, user=request.user
+            )
+        except IntegrationConfig.DoesNotExist:
+            return Response(
+                {"detail": "Integration nicht gefunden."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        settings = integration.settings or {}
+        settings["poll_interval"] = int(poll_interval)
+        integration.settings = settings
+        integration.save(update_fields=["settings", "updated_at"])
+
+        return Response({"detail": f"Sync-Intervall auf {poll_interval} Minuten gesetzt."})
 
 
 # ─── Confluence Import ────────────────────────────────────────────────────────
