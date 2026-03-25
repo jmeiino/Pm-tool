@@ -15,7 +15,6 @@ from apps.projects.models import Issue
 
 from .models import AgentCompanyConfig, AgentMessage, AgentProfile, AgentTask
 from .serializers import (
-    AgentCompanyConfigSerializer,
     AgentProfileSerializer,
     AgentTaskDetailSerializer,
     AgentTaskListSerializer,

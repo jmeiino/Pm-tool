@@ -9,7 +9,7 @@ import pytest
 
 from apps.agents.models import AgentCompanyConfig, AgentMessage, AgentProfile, AgentTask
 from apps.agents.webhook_handler import process_webhook_event, verify_webhook_signature
-from tests.factories import IssueFactory, ProjectFactory, UserFactory
+from tests.factories import IssueFactory, ProjectFactory
 
 
 @pytest.fixture

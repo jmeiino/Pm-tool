@@ -9,10 +9,8 @@ from apps.integrations.git.mappers import (
     github_labels_to_issue_type,
     github_labels_to_priority,
 )
-from apps.integrations.models import IntegrationConfig
 from apps.projects.models import Issue, Project
 from tests.factories import IntegrationConfigFactory, ProjectFactory
-
 
 # ─── GitHub Mapper Tests ─────────────────────────────────────────────────────
 

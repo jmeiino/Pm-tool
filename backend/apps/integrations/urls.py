@@ -1,8 +1,8 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .microsoft.views import microsoft_auth_callback, microsoft_auth_start
 from .import_views import ConfluenceImportViewSet, GitHubImportViewSet, ImportDashboardViewSet, JiraImportViewSet
+from .microsoft.views import microsoft_auth_callback, microsoft_auth_start
 from .views import (
     CalendarEventViewSet,
     ConfluencePageViewSet,

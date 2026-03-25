@@ -95,7 +95,7 @@ export default function AgentsPage() {
           ) : tasks.length === 0 ? (
             <div className="rounded-lg border border-dashed border-gray-300 py-12 text-center">
               <p className="text-sm text-gray-500">
-                Noch keine Aufgaben delegiert. Öffne ein Issue und klicke "An Agents delegieren".
+                Noch keine Aufgaben delegiert. Öffne ein Issue und klicke &quot;An Agents delegieren&quot;.
               </p>
             </div>
           ) : (

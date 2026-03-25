@@ -5,8 +5,6 @@ import hmac
 import json
 import logging
 
-from django.conf import settings as django_settings
-
 from .models import AgentCompanyConfig, AgentMessage, AgentProfile, AgentTask
 
 logger = logging.getLogger(__name__)

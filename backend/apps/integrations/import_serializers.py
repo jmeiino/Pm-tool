@@ -2,7 +2,6 @@
 
 from rest_framework import serializers
 
-
 # ─── Jira Preview ────────────────────────────────────────────────────────────
 
 class JiraPreviewIssueSerializer(serializers.Serializer):

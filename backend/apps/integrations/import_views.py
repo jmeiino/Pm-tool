@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.integrations.models import ConfluencePage, GitActivity, IntegrationConfig
+from apps.integrations.models import ConfluencePage, IntegrationConfig
 from apps.projects.models import Issue, Project
 
 from .import_serializers import (
@@ -333,7 +333,7 @@ class GitHubImportViewSet(viewsets.ViewSet):
                     "state": issue.get("state", "open"),
                     "assignee": assignee_login,
                     "author": author_login,
-                    "labels": [l.get("name", "") for l in issue.get("labels", [])],
+                    "labels": [lbl.get("name", "") for lbl in issue.get("labels", [])],
                     "is_pull_request": "pull_request" in issue,
                 })
 

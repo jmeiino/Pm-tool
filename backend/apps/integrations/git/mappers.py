@@ -2,7 +2,6 @@
 
 from apps.projects.models import Issue
 
-
 GITHUB_LABEL_TO_ISSUE_TYPE = {
     "bug": Issue.IssueType.BUG,
     "enhancement": Issue.IssueType.STORY,
