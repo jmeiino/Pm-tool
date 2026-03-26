@@ -104,7 +104,7 @@ export default function KalenderPage() {
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1.5 text-xs font-medium ${
                   viewMode === mode
-                    ? "bg-primary-600 text-white"
+                    ? "bg-brand text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -118,7 +118,7 @@ export default function KalenderPage() {
           </Button>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="text-sm font-medium text-gray-700 hover:text-primary-600 min-w-[180px] text-center"
+            className="text-sm font-medium text-gray-700 hover:text-brand min-w-[180px] text-center"
           >
             {headerLabel}
           </button>
@@ -130,7 +130,7 @@ export default function KalenderPage() {
 
       {/* Week View */}
       {viewMode === "week" && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
           {/* Day Headers */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b bg-gray-50">
             <div className="p-2" />
@@ -140,7 +140,7 @@ export default function KalenderPage() {
                 <div
                   key={day.toISOString()}
                   className={`p-2 text-center border-l ${
-                    isToday ? "bg-primary-50" : ""
+                    isToday ? "bg-brand-muted" : ""
                   }`}
                 >
                   <p className="text-xs text-gray-500">
@@ -148,7 +148,7 @@ export default function KalenderPage() {
                   </p>
                   <p
                     className={`text-sm font-semibold ${
-                      isToday ? "text-primary-700" : "text-gray-900"
+                      isToday ? "text-brand-deeper" : "text-gray-900"
                     }`}
                   >
                     {format(day, "d")}
@@ -194,7 +194,7 @@ export default function KalenderPage() {
 
       {/* Month View */}
       {viewMode === "month" && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
           {/* Day Headers */}
           <div className="grid grid-cols-7 bg-gray-50 border-b">
             {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
@@ -220,7 +220,7 @@ export default function KalenderPage() {
                   <p
                     className={`text-xs font-medium mb-0.5 ${
                       isToday
-                        ? "text-primary-700 font-bold"
+                        ? "text-brand-deeper font-bold"
                         : inMonth
                         ? "text-gray-900"
                         : "text-gray-400"

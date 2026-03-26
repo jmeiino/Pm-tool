@@ -82,7 +82,7 @@ export default function ProjectDetailPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "border-primary-600 text-primary-600"
+                  ? "border-brand text-brand"
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -153,7 +153,7 @@ export default function ProjectDetailPage() {
                 </div>
                 <div className="h-2 rounded-full bg-gray-200">
                   <div
-                    className="h-2 rounded-full bg-primary-600 transition-all"
+                    className="h-2 rounded-full bg-brand transition-all"
                     style={{
                       width: `${
                         stats.sprint_info.total_issues
@@ -193,7 +193,7 @@ export default function ProjectDetailPage() {
                 }
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   (issueFilters.status || "") === s
-                    ? "bg-primary-100 text-primary-700"
+                    ? "bg-brand-muted text-brand-deeper"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >

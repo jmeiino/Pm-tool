@@ -109,7 +109,7 @@ function ProjectIssues({ projectKey, projectId }: { projectKey: string; projectI
               type="checkbox"
               checked={store.jiraSelectedIssues.has(issue.jira_id)}
               onChange={() => store.toggleJiraIssue(issue.jira_id)}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600"
+              className="h-4 w-4 rounded border-gray-300 text-brand"
             />
             <span className="text-xs font-mono text-gray-500">{issue.key}</span>
             <span className="flex-1 text-sm text-gray-700">{issue.summary}</span>
@@ -197,7 +197,7 @@ export function JiraImportStep() {
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => store.toggleJiraProject(project.jira_id)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                  className="h-4 w-4 rounded border-gray-300 text-brand"
                 />
                 <button
                   onClick={() => toggleExpand(project.jira_id)}

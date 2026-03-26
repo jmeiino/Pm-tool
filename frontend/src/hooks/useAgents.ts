@@ -103,7 +103,7 @@ export function useAgentTaskStream(taskId: number, enabled = true) {
   useEffect(() => {
     if (!enabled || !taskId) return;
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4107/api/v1";
     const es = new EventSource(`${baseUrl}/agents/tasks/${taskId}/stream/`);
 
     es.onmessage = (event) => {

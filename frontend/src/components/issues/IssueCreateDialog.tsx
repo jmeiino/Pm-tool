@@ -31,7 +31,12 @@ export function IssueCreateDialog({
   });
 
   const onSubmit = (data: IssueCreateInput) => {
-    createIssue.mutate(data, {
+    const cleaned = {
+      ...data,
+      due_date: data.due_date || null,
+      story_points: data.story_points && !Number.isNaN(data.story_points) ? data.story_points : null,
+    };
+    createIssue.mutate(cleaned as IssueCreateInput, {
       onSuccess: () => {
         reset();
         onClose();
@@ -43,7 +48,7 @@ export function IssueCreateDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+      <div className="w-full max-w-lg rounded-md bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Neues Issue</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -58,7 +63,7 @@ export function IssueCreateDialog({
             </label>
             <input
               {...register("title")}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               placeholder="Issue-Titel"
             />
             {errors.title && (
@@ -73,7 +78,7 @@ export function IssueCreateDialog({
             <textarea
               {...register("description")}
               rows={3}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               placeholder="Beschreibung..."
             />
           </div>
@@ -85,7 +90,7 @@ export function IssueCreateDialog({
               </label>
               <select
                 {...register("issue_type")}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               >
                 <option value="task">Aufgabe</option>
                 <option value="story">Story</option>
@@ -100,7 +105,7 @@ export function IssueCreateDialog({
               </label>
               <select
                 {...register("priority")}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               >
                 <option value="highest">Höchste</option>
                 <option value="high">Hoch</option>
@@ -119,7 +124,7 @@ export function IssueCreateDialog({
               <input
                 type="number"
                 {...register("story_points", { valueAsNumber: true })}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               />
             </div>
             <div>
@@ -129,7 +134,7 @@ export function IssueCreateDialog({
               <input
                 type="date"
                 {...register("due_date")}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               />
             </div>
           </div>

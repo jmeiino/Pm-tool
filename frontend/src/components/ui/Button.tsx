@@ -7,16 +7,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary: "bg-primary-600 text-white hover:bg-primary-700 shadow-sm",
-  secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 shadow-sm",
-  ghost: "text-gray-700 hover:bg-gray-100",
-  danger: "bg-red-600 text-white hover:bg-red-700 shadow-sm",
+  primary:
+    "bg-brand text-white hover:bg-brand-dark hover:-translate-y-px hover:shadow-brand",
+  secondary:
+    "bg-transparent text-inotec-text border border-[rgba(0,0,0,0.14)] hover:border-brand hover:text-brand hover:-translate-y-px",
+  ghost:
+    "text-inotec-muted hover:bg-surface-up hover:text-inotec-text",
+  danger:
+    "bg-[rgba(220,38,38,0.08)] text-[#B91C1C] border border-[rgba(220,38,38,0.18)] hover:bg-[rgba(220,38,38,0.14)] hover:-translate-y-px",
 };
 
 const sizeClasses = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2 text-sm",
-  lg: "px-5 py-2.5 text-base",
+  sm: "min-h-[32px] px-4 text-[0.70rem]",
+  md: "min-h-[40px] px-5 text-[0.72rem]",
+  lg: "min-h-[44px] px-6 text-xs",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -25,7 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          "inline-flex items-center justify-center gap-2 rounded-sm font-semibold uppercase tracking-wider transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:transform-none disabled:shadow-none",
           variantClasses[variant],
           sizeClasses[size],
           className

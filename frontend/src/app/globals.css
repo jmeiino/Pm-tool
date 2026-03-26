@@ -1,9 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Brand */
+    --brand: #009EE3;
+    --brand-dark: #0085C4;
+    --brand-deeper: #006FA3;
+    --brand-muted: rgba(0, 158, 227, 0.10);
+    --brand-glow: rgba(0, 158, 227, 0.20);
+    --brand-border: rgba(0, 158, 227, 0.30);
+
+    /* Surfaces */
+    --bg: #EDF1F6;
+    --surface: #FFFFFF;
+    --surface-up: #F5F8FB;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.14);
+
+    /* Dark surfaces */
+    --dark-bg: #0A0C0F;
+    --dark-surface: #131720;
+    --dark-elevated: #1C2333;
+    --dark-border: rgba(255, 255, 255, 0.07);
+    --dark-border-strong: rgba(255, 255, 255, 0.14);
+
+    /* Text */
+    --text: #1A2535;
+    --text-body: #374151;
+    --text-muted: #6B7280;
+    --text-subtle: #9CA3AF;
+    --text-inverse: #FFFFFF;
+    --text-inverse-muted: rgba(255, 255, 255, 0.55);
+    --text-inverse-subtle: rgba(255, 255, 255, 0.28);
+
+    /* Semantic */
+    --success: #00A550;
+    --success-bg: rgba(0, 165, 80, 0.09);
+    --success-border: rgba(0, 165, 80, 0.20);
+    --warning: #D97706;
+    --warning-bg: rgba(217, 119, 6, 0.09);
+    --warning-border: rgba(217, 119, 6, 0.20);
+    --danger: #DC2626;
+    --danger-bg: rgba(220, 38, 38, 0.08);
+    --danger-border: rgba(220, 38, 38, 0.18);
+    --info: #3B82F6;
+    --info-bg: rgba(59, 130, 246, 0.08);
+    --info-border: rgba(59, 130, 246, 0.20);
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-surface-bg text-inotec-body antialiased;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

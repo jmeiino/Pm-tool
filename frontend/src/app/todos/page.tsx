@@ -47,7 +47,7 @@ export default function TodosPage() {
             onClick={() => setStatusFilter(filter.value)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               statusFilter === filter.value
-                ? "bg-primary-100 text-primary-700"
+                ? "bg-brand-muted text-brand-deeper"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -69,7 +69,7 @@ export default function TodosPage() {
                     type="checkbox"
                     checked={todo.status === "done"}
                     onChange={() => handleToggleDone(todo.id, todo.status)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                    className="h-4 w-4 rounded border-gray-300 text-brand"
                   />
                   <div>
                     <p

@@ -62,7 +62,7 @@ export default function GitHubPage() {
       <div className="flex gap-2">
         <Link
           href="/github"
-          className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
+          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white"
         >
           Aktivitaeten
         </Link>
@@ -112,7 +112,7 @@ export default function GitHubPage() {
               }}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 eventFilter === f.value
-                  ? "bg-primary-600 text-white"
+                  ? "bg-brand text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
               }`}
             >
@@ -131,7 +131,7 @@ export default function GitHubPage() {
               );
               setPage(1);
             }}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs focus:border-brand focus:outline-none"
           >
             <option value="">Alle Projekte</option>
             {projects.results.map((p) => (
@@ -174,7 +174,7 @@ export default function GitHubPage() {
                           href={activity.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-medium text-gray-900 hover:text-primary-600 truncate"
+                          className="text-sm font-medium text-gray-900 hover:text-brand truncate"
                         >
                           {activity.title}
                         </a>

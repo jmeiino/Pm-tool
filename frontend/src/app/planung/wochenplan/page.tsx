@@ -22,19 +22,19 @@ function DayColumn({ date, dayName }: { date: Date; dayName: string }) {
 
   return (
     <div
-      className={`rounded-xl border bg-white ${
-        isToday ? "border-primary-300 ring-1 ring-primary-200" : "border-gray-200"
+      className={`rounded-md border bg-white ${
+        isToday ? "border-brand ring-1 ring-brand" : "border-gray-200"
       }`}
     >
       <div
         className={`px-3 py-2 border-b text-center ${
-          isToday ? "bg-primary-50" : "bg-gray-50"
+          isToday ? "bg-brand-muted" : "bg-gray-50"
         }`}
       >
         <p className="text-xs font-medium text-gray-500">{dayName}</p>
         <p
           className={`text-sm font-semibold ${
-            isToday ? "text-primary-700" : "text-gray-900"
+            isToday ? "text-brand-deeper" : "text-gray-900"
           }`}
         >
           {format(date, "d. MMM", { locale: de })}
@@ -113,7 +113,7 @@ export default function WochenplanPage() {
           </Button>
           <button
             onClick={() => setWeekOffset(0)}
-            className="text-sm font-medium text-gray-700 hover:text-primary-600 min-w-[180px] text-center"
+            className="text-sm font-medium text-gray-700 hover:text-brand min-w-[180px] text-center"
           >
             {weekOffset === 0 ? "Diese Woche" : weekLabel}
           </button>

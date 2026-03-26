@@ -68,7 +68,7 @@ function MessageBubble({
       <div
         className={`max-w-[75%] rounded-lg px-3 py-2 ${
           isUser
-            ? "bg-primary-600 text-white"
+            ? "bg-brand text-white"
             : "border border-gray-200 bg-white"
         }`}
       >

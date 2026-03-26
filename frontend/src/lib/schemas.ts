@@ -23,8 +23,8 @@ export const issueCreateSchema = z.object({
     .default("medium"),
   assignee: z.number().nullable().optional(),
   sprint: z.number().nullable().optional(),
-  story_points: z.number().nullable().optional(),
-  due_date: z.string().nullable().optional(),
+  story_points: z.any().optional(),
+  due_date: z.preprocess((v) => (v === "" ? null : v), z.string().nullable().optional()),
   labels: z.array(z.number()).optional().default([]),
 });
 
@@ -32,8 +32,8 @@ export const todoCreateSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
   description: z.string().optional().default(""),
   priority: z.number().min(1).max(4).default(3),
-  due_date: z.string().nullable().optional(),
-  estimated_hours: z.number().nullable().optional(),
+  due_date: z.preprocess((v) => (v === "" ? null : v), z.string().nullable().optional()),
+  estimated_hours: z.any().optional(),
   linked_issue: z.number().nullable().optional(),
 });
 

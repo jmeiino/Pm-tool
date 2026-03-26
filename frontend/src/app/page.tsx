@@ -164,7 +164,7 @@ export default function DashboardPage() {
                       type="checkbox"
                       checked={todo.status === "done"}
                       onChange={() => handleToggleDone(todo.id, todo.status)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                      className="h-4 w-4 rounded border-gray-300 text-brand"
                     />
                     <div>
                       <p
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                   <input
                     type="checkbox"
                     onChange={() => handleToggleDone(todo.id, todo.status)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                    className="h-4 w-4 rounded border-gray-300 text-brand"
                   />
                   <div>
                     <p className="text-sm font-medium text-gray-900">{todo.title}</p>

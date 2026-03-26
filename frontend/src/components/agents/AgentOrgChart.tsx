@@ -65,7 +65,7 @@ function AgentNode({ agent, isActive }: { agent: AgentProfile; isActive: boolean
   return (
     <div
       className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
-        isActive ? "bg-primary-50 ring-1 ring-primary-300" : "hover:bg-gray-50"
+        isActive ? "bg-brand-muted ring-1 ring-brand" : "hover:bg-gray-50"
       }`}
     >
       <div

@@ -24,7 +24,7 @@ export function ImportConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-md rounded-md bg-white p-6 shadow-xl">
         <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
         <div className="mt-4 space-y-2">
           {summary.map((line, i) => (

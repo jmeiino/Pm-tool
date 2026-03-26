@@ -25,7 +25,7 @@ export function useAIProvider() {
   return useQuery({
     queryKey: ["ai-provider"],
     queryFn: async () => {
-      const { data } = await api.get<AIProviderResponse>("/ai/ai/provider/");
+      const { data } = await api.get<AIProviderResponse>("/ai/provider/");
       return data;
     },
   });
@@ -36,7 +36,7 @@ export function useUpdateAIProvider() {
   return useMutation({
     mutationFn: async (update: AISettingsUpdate) => {
       const { data } = await api.patch<AIProviderResponse>(
-        "/ai/ai/provider/",
+        "/ai/provider/",
         update
       );
       return data;

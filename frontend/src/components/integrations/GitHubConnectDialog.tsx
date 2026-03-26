@@ -36,7 +36,7 @@ export function GitHubConnectDialog({ open, onClose }: GitHubConnectDialogProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">GitHub verbinden</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -53,7 +53,7 @@ export function GitHubConnectDialog({ open, onClose }: GitHubConnectDialogProps)
               type="password"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               placeholder="ghp_xxxxxxxxxxxx"
               required
             />

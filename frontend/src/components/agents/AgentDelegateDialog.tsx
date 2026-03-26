@@ -39,7 +39,7 @@ export function AgentDelegateDialog({ open, onClose, issueId, issueTitle }: Agen
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-md rounded-md bg-white p-6 shadow-xl">
         <h3 className="text-lg font-semibold text-gray-900">An Agents delegieren</h3>
         <p className="mt-1 text-sm text-gray-500">{issueTitle}</p>
 

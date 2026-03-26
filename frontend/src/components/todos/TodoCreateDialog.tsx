@@ -43,7 +43,7 @@ export function TodoCreateDialog({ open, onClose }: TodoCreateDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Neue Aufgabe</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -51,12 +51,19 @@ export function TodoCreateDialog({ open, onClose }: TodoCreateDialogProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit((data) => createTodo.mutate(data))} className="space-y-4">
+        <form onSubmit={handleSubmit((data) => {
+          const cleaned = {
+            ...data,
+            due_date: data.due_date || null,
+            estimated_hours: data.estimated_hours && !Number.isNaN(data.estimated_hours) ? data.estimated_hours : null,
+          };
+          createTodo.mutate(cleaned);
+        })} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Titel *</label>
             <input
               {...register("title")}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               placeholder="Was muss erledigt werden?"
             />
             {errors.title && (
@@ -69,7 +76,7 @@ export function TodoCreateDialog({ open, onClose }: TodoCreateDialogProps) {
             <textarea
               {...register("description")}
               rows={3}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
 
@@ -78,7 +85,7 @@ export function TodoCreateDialog({ open, onClose }: TodoCreateDialogProps) {
               <label className="block text-sm font-medium text-gray-700">Priorität</label>
               <select
                 {...register("priority", { valueAsNumber: true })}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               >
                 <option value={1}>Dringend</option>
                 <option value={2}>Hoch</option>
@@ -91,7 +98,7 @@ export function TodoCreateDialog({ open, onClose }: TodoCreateDialogProps) {
               <input
                 type="date"
                 {...register("due_date")}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               />
             </div>
           </div>
@@ -104,7 +111,7 @@ export function TodoCreateDialog({ open, onClose }: TodoCreateDialogProps) {
               type="number"
               step="0.5"
               {...register("estimated_hours", { valueAsNumber: true })}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               placeholder="z.B. 2.5"
             />
           </div>

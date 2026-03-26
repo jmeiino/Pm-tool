@@ -9,10 +9,17 @@ interface CardProps {
 
 export function Card({ children, className, title, action }: CardProps) {
   return (
-    <div className={cn("rounded-xl border border-gray-200 bg-white shadow-sm", className)}>
+    <div
+      className={cn(
+        "rounded-md border border-[rgba(0,0,0,0.08)] bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-border hover:-translate-y-0.5",
+        className
+      )}
+    >
       {title && (
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] px-5 py-3">
+          <h3 className="text-sm font-semibold text-inotec-text tracking-wide">
+            {title}
+          </h3>
           {action}
         </div>
       )}

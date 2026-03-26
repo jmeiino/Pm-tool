@@ -7,6 +7,9 @@ import { Header } from "@/components/layout/Header";
 export const metadata: Metadata = {
   title: "PM-Tool — Persönliches Projektmanagement",
   description: "Dein persönliches Projektmanagement-Dashboard",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -16,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body className="font-sans">
+      <body className="font-sans bg-surface-bg">
         <Providers>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />

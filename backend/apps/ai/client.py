@@ -99,7 +99,7 @@ class OpenRouterClient(BaseAIClient):
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": getattr(settings, "OPENROUTER_REFERER", "http://localhost:8000"),
+                "HTTP-Referer": getattr(settings, "OPENROUTER_REFERER", "http://localhost:4107"),
             },
             timeout=120.0,
         )
@@ -171,7 +171,7 @@ def get_ai_client(user=None) -> BaseAIClient:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": getattr(settings, "OPENROUTER_REFERER", "http://localhost:8000"),
+                "HTTP-Referer": getattr(settings, "OPENROUTER_REFERER", "http://localhost:4107"),
             },
             timeout=120.0,
         )

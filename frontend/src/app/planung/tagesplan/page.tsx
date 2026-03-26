@@ -62,7 +62,7 @@ function SortableTimeBlock({ item }: { item: DailyPlanItem }) {
       style={style}
       className={`flex items-start gap-3 rounded-lg border p-4 bg-white ${
         isDragging
-          ? "border-primary-300 shadow-lg opacity-90"
+          ? "border-brand shadow-lg opacity-90"
           : "border-gray-100 hover:border-gray-200"
       }`}
     >
@@ -197,7 +197,7 @@ export default function TagesplanPage() {
               className={`h-2 rounded-full transition-all ${
                 totalPlannedMinutes > capacityMinutes
                   ? "bg-red-500"
-                  : "bg-primary-600"
+                  : "bg-brand"
               }`}
               style={{
                 width: `${Math.min(
@@ -249,7 +249,7 @@ export default function TagesplanPage() {
       {/* Add Task Dialog */}
       {showAddDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Aufgabe hinzufügen

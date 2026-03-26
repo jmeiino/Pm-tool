@@ -280,7 +280,7 @@ export default function RepoDetailPage({
 
                   return (
                     <li key={i} className="flex items-start gap-2">
-                      <WrenchScrewdriverIcon className="mt-0.5 h-4 w-4 text-primary-500 flex-shrink-0" />
+                      <WrenchScrewdriverIcon className="mt-0.5 h-4 w-4 text-brand flex-shrink-0" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-900">

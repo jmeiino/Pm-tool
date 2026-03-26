@@ -8,6 +8,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
 app = Celery("pmtool")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
+app.autodiscover_tasks([
+    "apps.integrations.jira",
+    "apps.integrations.confluence",
+    "apps.integrations.git",
+    "apps.integrations.microsoft",
+])
 
 
 @app.on_after_finalize.connect

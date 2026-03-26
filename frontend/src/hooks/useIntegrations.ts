@@ -67,6 +67,18 @@ export function useSyncIntegration() {
   });
 }
 
+export function useDeleteIntegration() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/integrations/configs/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrations"] });
+    },
+  });
+}
+
 export function useSyncLogs(integrationId?: number) {
   const params = integrationId ? `?integration=${integrationId}` : "";
   return useQuery({

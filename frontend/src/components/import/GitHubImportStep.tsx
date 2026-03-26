@@ -86,7 +86,7 @@ export function GitHubImportStep() {
             type="checkbox"
             checked={store.githubMineOnly}
             onChange={(e) => store.setGitHubMineOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-primary-600"
+            className="h-4 w-4 rounded border-gray-300 text-brand"
           />
           Nur meine Daten
         </label>
@@ -109,7 +109,7 @@ export function GitHubImportStep() {
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => store.toggleGitHubRepo(repo.full_name)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                  className="h-4 w-4 rounded border-gray-300 text-brand"
                 />
                 <button
                   onClick={() => toggleExpand(repo.full_name)}
@@ -193,7 +193,7 @@ export function GitHubImportStep() {
                               onChange={() =>
                                 store.toggleGitHubIssue(repo.full_name, issue.github_id)
                               }
-                              className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                              className="h-4 w-4 rounded border-gray-300 text-brand"
                             />
                             <span className="text-xs font-mono text-gray-500">#{issue.number}</span>
                             <span className="flex-1 text-sm text-gray-700">{issue.title}</span>

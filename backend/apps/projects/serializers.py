@@ -96,7 +96,10 @@ class IssueCreateSerializer(serializers.ModelSerializer):
 
 class IssueListSerializer(serializers.ModelSerializer):
     project_key = serializers.CharField(source="project.key", read_only=True)
-    assignee_name = serializers.CharField(source="assignee.__str__", read_only=True, default=None)
+    assignee_name = serializers.SerializerMethodField()
+
+    def get_assignee_name(self, obj):
+        return str(obj.assignee) if obj.assignee else None
     label_names = serializers.SlugRelatedField(source="labels", slug_field="name", many=True, read_only=True)
 
     class Meta:

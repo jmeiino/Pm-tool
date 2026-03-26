@@ -23,7 +23,9 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
         return IntegrationConfig.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        integration = serializer.save(user=self.request.user)
+        if integration.is_enabled:
+            self._dispatch_sync(integration)
 
     @action(detail=True, methods=["post"])
     def sync(self, request, pk=None):
@@ -42,10 +44,19 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        self._dispatch_sync(integration)
+
+        return Response(
+            {"detail": "Synchronisierung gestartet."},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @staticmethod
+    def _dispatch_sync(integration):
+        """Sync-Task für eine Integration an Celery dispatchen."""
         integration.sync_status = IntegrationConfig.SyncStatus.SYNCING
         integration.save(update_fields=["sync_status", "updated_at"])
 
-        # Dispatch to the appropriate Celery task
         if integration.integration_type == IntegrationConfig.IntegrationType.JIRA:
             from apps.integrations.jira.tasks import poll_jira_updates
 
@@ -62,11 +73,6 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
             from apps.integrations.microsoft.tasks import poll_microsoft_calendar
 
             poll_microsoft_calendar.delay(integration.id)
-
-        return Response(
-            {"detail": "Synchronisierung gestartet."},
-            status=status.HTTP_202_ACCEPTED,
-        )
 
 
 class SyncLogViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

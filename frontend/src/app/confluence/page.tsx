@@ -37,7 +37,7 @@ export default function ConfluenceListPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Seiten durchsuchen..."
-          className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </div>
 
@@ -51,7 +51,7 @@ export default function ConfluenceListPage() {
               key={page.id}
               href={`/confluence/${page.id}`}
             >
-              <Card className="hover:border-primary-300 transition-colors cursor-pointer mb-3">
+              <Card className="hover:border-brand transition-colors cursor-pointer mb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

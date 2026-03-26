@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.core.middleware.AutoAuthMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -131,7 +132,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+        "apps.core.middleware.AutoAuthDRF",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": [
@@ -150,7 +151,7 @@ SPECTACULAR_SETTINGS = {
 # CORS
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:3000",
+    default="http://localhost:3115",
     cast=Csv(),
 )
 
@@ -163,10 +164,6 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
-    "poll-all-jira-integrations": {
-        "task": "apps.integrations.jira.tasks.poll_all_jira_integrations",
-        "schedule": 900.0,  # every 15 minutes
-    },
     "check-deadline-warnings": {
         "task": "apps.notifications.tasks.check_deadline_warnings",
         "schedule": 3600.0,  # every hour
@@ -181,7 +178,7 @@ ATLASSIAN_API_TOKEN = config("ATLASSIAN_API_TOKEN", default="")
 MS_CLIENT_ID = config("MS_CLIENT_ID", default="")
 MS_CLIENT_SECRET = config("MS_CLIENT_SECRET", default="")
 MS_TENANT_ID = config("MS_TENANT_ID", default="")
-MS_REDIRECT_URI = config("MS_REDIRECT_URI", default="http://localhost:8000/api/v1/integrations/microsoft/callback/")
+MS_REDIRECT_URI = config("MS_REDIRECT_URI", default="http://localhost:4107/api/v1/integrations/microsoft/callback/")
 
 GITHUB_TOKEN = config("GITHUB_TOKEN", default="")
 
@@ -198,4 +195,4 @@ OLLAMA_MODEL = config("OLLAMA_MODEL", default="llama3.1")
 # OpenRouter
 OPENROUTER_API_KEY = config("OPENROUTER_API_KEY", default="")
 OPENROUTER_MODEL = config("OPENROUTER_MODEL", default="anthropic/claude-sonnet-4")
-OPENROUTER_REFERER = config("OPENROUTER_REFERER", default="http://localhost:8000")
+OPENROUTER_REFERER = config("OPENROUTER_REFERER", default="http://localhost:4107")

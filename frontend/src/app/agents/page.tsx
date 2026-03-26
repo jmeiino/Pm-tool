@@ -37,7 +37,7 @@ export default function AgentsPage() {
       <div className="mx-auto max-w-6xl space-y-4">
         <button
           onClick={() => setSelectedTaskId(null)}
-          className="text-sm text-primary-600 hover:text-primary-700"
+          className="text-sm text-brand hover:text-brand-deeper"
         >
           &larr; Zurück zur Übersicht
         </button>
@@ -135,7 +135,7 @@ function TaskCard({ task, onClick }: { task: AgentTask; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-primary-300 hover:bg-primary-50/30"
+      className="w-full rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-brand hover:bg-brand-muted/30"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

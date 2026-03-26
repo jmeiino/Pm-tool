@@ -186,7 +186,7 @@ export function ConfluenceImportStep() {
                           type="checkbox"
                           checked={selectedActionItems.has(key)}
                           onChange={() => toggleActionItem(key)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                          className="h-4 w-4 rounded border-gray-300 text-brand"
                         />
                         <span className="text-sm text-gray-700">{text}</span>
                       </div>
@@ -237,7 +237,7 @@ export function ConfluenceImportStep() {
                 onClick={() => store.toggleConfluenceSpace(space.key)}
                 className={`rounded-lg border p-3 text-left transition-colors ${
                   isSelected
-                    ? "border-primary-500 bg-primary-50"
+                    ? "border-brand bg-brand-muted"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -266,7 +266,7 @@ export function ConfluenceImportStep() {
                 type="checkbox"
                 checked={store.confluenceMyPagesOnly}
                 onChange={(e) => store.setConfluenceMyPagesOnly(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                className="h-4 w-4 rounded border-gray-300 text-brand"
               />
               Nur meine Seiten
             </label>
@@ -287,7 +287,7 @@ export function ConfluenceImportStep() {
                     type="checkbox"
                     checked={store.confluenceSelectedPages.has(page.confluence_page_id)}
                     onChange={() => store.toggleConfluencePage(page.confluence_page_id)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600"
+                    className="h-4 w-4 rounded border-gray-300 text-brand"
                   />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-gray-900">{page.title}</span>
@@ -318,7 +318,7 @@ export function ConfluenceImportStep() {
               type="checkbox"
               checked={analyzePages}
               onChange={(e) => setAnalyzePages(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600"
+              className="h-4 w-4 rounded border-gray-300 text-brand"
             />
             KI-Analyse + Action Items
           </label>

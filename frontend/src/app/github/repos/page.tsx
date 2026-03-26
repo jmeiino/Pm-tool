@@ -73,7 +73,7 @@ export default function RepoAnalysesPage() {
                 value={repoName}
                 onChange={(e) => setRepoName(e.target.value)}
                 placeholder="z.B. facebook/react"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                 onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               />
             </div>
@@ -97,7 +97,7 @@ export default function RepoAnalysesPage() {
         </Link>
         <Link
           href="/github/repos"
-          className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
+          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white"
         >
           Repository-Analyse
         </Link>

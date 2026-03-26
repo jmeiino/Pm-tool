@@ -35,22 +35,22 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
+    <header className="flex h-14 items-center justify-between border-b-[3px] border-brand bg-dark-bg px-4 lg:px-6">
       <div className="flex items-center gap-3">
         {/* Mobile hamburger */}
         <button
-          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden"
+          className="rounded-sm p-2 text-[rgba(255,255,255,0.55)] hover:bg-[rgba(0,158,227,0.10)] hover:text-white lg:hidden"
           onClick={toggleSidebar}
         >
           <Bars3Icon className="h-5 w-5" />
         </button>
-        <h1 className="text-base lg:text-lg font-semibold text-gray-900">
+        <h1 className="font-mono text-xs font-medium uppercase tracking-widest text-[rgba(255,255,255,0.55)]">
           Persönliches Projektmanagement
         </h1>
       </div>
-      <div className="flex items-center gap-2 lg:gap-4">
+      <div className="flex items-center gap-2 lg:gap-3">
         <button
-          className={`rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 ${
+          className={`rounded-sm p-2 text-[rgba(255,255,255,0.55)] hover:bg-[rgba(0,158,227,0.10)] hover:text-white transition-colors ${
             syncing ? "animate-spin" : ""
           }`}
           title="Synchronisieren"
@@ -61,13 +61,13 @@ export function Header() {
         </button>
         <div className="relative">
           <button
-            className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            className="relative rounded-sm p-2 text-[rgba(255,255,255,0.55)] hover:bg-[rgba(0,158,227,0.10)] hover:text-white transition-colors"
             title="Benachrichtigungen"
             onClick={() => setShowNotifications(!showNotifications)}
           >
             <BellIcon className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#DC2626] text-[10px] font-bold text-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -80,9 +80,9 @@ export function Header() {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowNotifications(false)}
               />
-              <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border bg-white shadow-lg">
-                <div className="border-b px-4 py-3">
-                  <h3 className="text-sm font-semibold text-gray-900">
+              <div className="absolute right-0 top-12 z-50 w-80 rounded-md border border-[rgba(0,0,0,0.08)] bg-white shadow-lg">
+                <div className="border-b border-[rgba(0,0,0,0.08)] px-4 py-3">
+                  <h3 className="font-mono text-xs font-medium uppercase tracking-wider text-inotec-muted">
                     Benachrichtigungen
                   </h3>
                 </div>
@@ -91,22 +91,22 @@ export function Header() {
                     notifications.results.slice(0, 10).map((n) => (
                       <div
                         key={n.id}
-                        className="border-b border-gray-50 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                        className="border-b border-[rgba(0,0,0,0.04)] px-4 py-3 hover:bg-surface-up cursor-pointer transition-colors"
                         onClick={() => {
                           markRead.mutate(n.id);
                           setShowNotifications(false);
                         }}
                       >
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-inotec-text">
                           {n.title}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                        <p className="text-xs text-inotec-muted mt-0.5 line-clamp-2">
                           {n.message}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-6 text-center text-sm text-gray-400">
+                    <div className="px-4 py-6 text-center text-sm text-inotec-subtle">
                       Keine neuen Benachrichtigungen
                     </div>
                   )}

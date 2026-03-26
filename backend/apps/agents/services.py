@@ -99,7 +99,7 @@ class AgentBridgeService:
         """PM-Tool Base-URL aus Settings."""
         from django.conf import settings
 
-        return getattr(settings, "PM_TOOL_BASE_URL", "http://localhost:8000")
+        return getattr(settings, "PM_TOOL_BASE_URL", "http://localhost:4107")
 
     def close(self):
         self.client.close()

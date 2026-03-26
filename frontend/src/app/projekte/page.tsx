@@ -44,7 +44,7 @@ export default function ProjektePage() {
             onClick={() => setStatusFilter(filter.value)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               statusFilter === filter.value
-                ? "bg-primary-100 text-primary-700"
+                ? "bg-brand-muted text-brand-deeper"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -59,7 +59,7 @@ export default function ProjektePage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects?.map((project) => (
             <Link key={project.id} href={`/projekte/${project.id}`}>
-              <Card className="hover:border-primary-300 transition-colors cursor-pointer">
+              <Card className="hover:border-brand transition-colors cursor-pointer">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-500">

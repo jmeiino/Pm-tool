@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
+import { useIntegrations, useSyncIntegration, useDeleteIntegration } from "@/hooks/useIntegrations";
 import { useAIProvider, useUpdateAIProvider } from "@/hooks/useAI";
 import { useCurrentUser, useUpdateUser } from "@/hooks/useUser";
 import { JiraConnectDialog } from "@/components/integrations/JiraConnectDialog";
@@ -139,7 +139,7 @@ function TextInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400 pr-10"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:bg-gray-50 disabled:text-gray-400 pr-10"
       />
       {isSecret && value && (
         <button
@@ -259,7 +259,7 @@ function ProfileSection() {
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           >
             {TIMEZONES.map((tz) => (
               <option key={tz} value={tz}>
@@ -277,7 +277,7 @@ function ProfileSection() {
             step={0.5}
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
       </div>
@@ -368,7 +368,7 @@ function AIProviderSection() {
                   onClick={() => setActiveProvider(p.key)}
                   className={`relative rounded-lg border-2 p-4 text-left transition-all ${
                     isActive
-                      ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500"
+                      ? "border-brand bg-brand-muted ring-1 ring-brand"
                       : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
@@ -427,7 +427,7 @@ function AIProviderSection() {
                   <select
                     value={claudeModel}
                     onChange={(e) => setClaudeModel(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                   >
                     <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
                     <option value="claude-opus-4-20250514">Claude Opus 4</option>
@@ -520,6 +520,7 @@ type DialogType = "jira" | "confluence" | "github" | "microsoft" | null;
 function IntegrationSection() {
   const { data: integrations } = useIntegrations();
   const syncIntegration = useSyncIntegration();
+  const deleteIntegration = useDeleteIntegration();
   const [openDialog, setOpenDialog] = useState<DialogType>(null);
 
   const getIntegration = (type: string) =>
@@ -580,6 +581,18 @@ function IntegrationSection() {
                           ? "Synchronisiert..."
                           : "Sync"}
                       </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`${meta.name}-Integration wirklich trennen?`)) {
+                            deleteIntegration.mutate(integration.id);
+                          }
+                        }}
+                        disabled={deleteIntegration.isPending}
+                      >
+                        Trennen
+                      </Button>
                     </>
                   ) : (
                     <>
@@ -601,7 +614,7 @@ function IntegrationSection() {
         <div className="mt-4 border-t border-gray-100 pt-4">
           <Link
             href="/import"
-            className="flex items-center gap-2 rounded-lg bg-primary-50 px-4 py-3 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100"
+            className="flex items-center gap-2 rounded-lg bg-brand-muted px-4 py-3 text-sm font-medium text-brand-deeper transition-colors hover:bg-brand-glow"
           >
             <ArrowDownTrayIcon className="h-5 w-5" />
             Import-Wizard — Daten aus Integrationen selektiv importieren
