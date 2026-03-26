@@ -98,6 +98,8 @@ Alle Endpunkte erfordern eine authentifizierte Session. Daten werden automatisch
 | `PUT/PATCH` | `/integrations/configs/{id}/` | Konfiguration aendern |
 | `DELETE` | `/integrations/configs/{id}/` | Integration entfernen |
 | `POST` | `/integrations/configs/{id}/sync/` | Manuellen Sync ausloesen |
+| `POST` | `/integrations/configs/{id}/register-webhook/` | Webhook fuer alle Repos registrieren (Body: `{"callback_url": "..."}`) |
+| `GET` | `/integrations/configs/{id}/conflicts/` | Sync-Konflikte anzeigen |
 | `GET` | `/integrations/sync-logs/` | Sync-Protokolle |
 
 ## Confluence
@@ -111,10 +113,11 @@ Alle Endpunkte erfordern eine authentifizierte Session. Daten werden automatisch
 
 | Methode | Pfad | Beschreibung |
 |---|---|---|
-| `GET` | `/integrations/git-activities/` | Commits und PRs |
+| `GET` | `/integrations/git-activities/` | Commits, PRs und Reviews |
 | `GET` | `/integrations/repo-analyses/` | Repository-Analysen |
 | `POST` | `/integrations/repo-analyses/{id}/analyze/` | KI-Analyse starten |
 | `POST` | `/integrations/repo-analyses/{id}/create-todos/` | Todos aus Analyse erstellen |
+| `POST` | `/integrations/github/webhook/` | GitHub Webhook-Endpoint (wird von GitHub aufgerufen) |
 
 ## Kalender
 

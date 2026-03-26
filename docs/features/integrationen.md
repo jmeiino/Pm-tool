@@ -68,14 +68,69 @@ Importierte Confluence-Seiten koennen per KI analysiert werden:
 
 ---
 
-## GitHub (Inbound + Repository-Analyse)
+## GitHub (Bidirektional + Webhooks + KI-Analyse)
 
 ### Was wird synchronisiert?
 
 | Objekt | Richtung | Details |
 |---|---|---|
+| Issues | Bidirektional | Titel, Beschreibung, Status, Typ, Prioritaet, Assignee |
+| Kommentare | Bidirektional | Autor, Inhalt (pro Issue) |
 | Commits | Inbound | SHA, Autor, Message, Branch |
-| Pull Requests | Inbound | Titel, Status, Autor |
+| Pull Requests | Inbound | Titel, Status, Autor, Merge-Info |
+| PR-Reviews | Inbound | Review-Autor, Status, Kommentar |
+| Milestones | Inbound | Werden als Sprints gemappt (Name, Ziel, Enddatum) |
+| Labels | Inbound | Werden auf Issue-Typ und Prioritaet gemappt |
+
+### Automatische Issue-Erkennung
+
+Neue Issues auf GitHub werden automatisch importiert (konfigurierbar pro Repository via `auto_import_issues`). Es muessen nicht mehr vorab manuell Issues importiert werden — der Sync erkennt und erstellt neue Issues automatisch.
+
+### Assignee-Sync (Bidirektional)
+
+- GitHub-Assignees werden als `github_assignee_login` im Issue gespeichert
+- Beim Outbound-Sync wird der Assignee an GitHub uebertragen
+- Bei Webhook-Events (assigned/unassigned) wird das Issue sofort aktualisiert
+
+### Kommentar-Sync (Bidirektional)
+
+- **Inbound:** Kommentare von GitHub-Issues werden als lokale Kommentare importiert
+- **Outbound:** Neue lokale Kommentare werden nach GitHub gepusht
+- **Webhook:** Neue/bearbeitete/geloeschte Kommentare werden in Echtzeit synchronisiert
+- Kommentare werden ueber `github_comment_id` verknuepft
+
+### Milestone → Sprint-Mapping
+
+GitHub Milestones werden automatisch als Sprints importiert:
+- Milestone-Titel → Sprint-Name
+- Milestone-Beschreibung → Sprint-Ziel
+- Milestone-Due-Date → Sprint-Enddatum
+- Issues mit Milestone werden dem entsprechenden Sprint zugeordnet
+
+### Webhooks (Echtzeit-Sync)
+
+Statt nur periodisch zu pollen, kann PM-Tool per Webhook sofort ueber Aenderungen informiert werden:
+
+**Unterstuetzte Events:**
+- `issues` — Issue erstellt, bearbeitet, geschlossen, zugewiesen
+- `issue_comment` — Kommentare erstellt, bearbeitet, geloescht
+- `push` — Neue Commits
+- `pull_request` — PR erstellt, gemerged, geschlossen
+- `pull_request_review` — Review eingereicht
+
+**Webhook-Registrierung:**
+1. Automatisch via `POST /integrations/configs/{id}/register-webhook/` mit `callback_url`
+2. HMAC-SHA256-Signaturpruefung fuer Sicherheit
+3. Secret wird in den Integration-Settings gespeichert
+
+**Webhook-Endpoint:** `POST /integrations/github/webhook/`
+
+### Konflikterkennung
+
+Bei bidirektionalem Sync kann es zu Konflikten kommen:
+- Issues die sowohl lokal als auch auf GitHub geaendert wurden
+- Endpoint: `GET /integrations/configs/{id}/conflicts/`
+- Zeigt Titel- und Status-Konflikte mit Timestamps an
 
 ### Auto-Verknuepfung
 
@@ -96,12 +151,16 @@ Aus den Ergebnissen koennen direkt Todos erstellt werden (`POST /integrations/re
 
 1. Unter **Einstellungen > Integrationen > GitHub**
 2. GitHub Personal Access Token eingeben
+3. Repositories konfigurieren mit `owner`, `repo`, `project_id`
+4. Optional: `auto_import_issues: true` pro Repository
 
 ### Technische Details
 
 - **Client:** `GitHubClient` (eigene Implementierung mit `httpx`)
 - **Service:** `GitHubSyncService`
-- **Polling:** Alle 10 Minuten via Celery Beat
+- **Webhook-Handler:** `webhook_handler.py` mit Event-Dispatch-Table
+- **Polling:** Alle 10 Minuten via Celery Beat (oder Echtzeit via Webhooks)
+- **Mapper:** `github_issue_to_local()`, `local_issue_to_github()`, `github_milestone_to_sprint()`
 
 ---
 

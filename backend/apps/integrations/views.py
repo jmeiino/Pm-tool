@@ -68,6 +68,78 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
             status=status.HTTP_202_ACCEPTED,
         )
 
+    @action(detail=True, methods=["post"], url_path="register-webhook")
+    def register_webhook(self, request, pk=None):
+        """Webhook fuer alle konfigurierten Repos registrieren (#16)."""
+        integration = self.get_object()
+
+        if integration.integration_type != IntegrationConfig.IntegrationType.GITHUB:
+            return Response(
+                {"detail": "Nur fuer GitHub-Integrationen verfuegbar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        callback_url = request.data.get("callback_url", "")
+        if not callback_url:
+            return Response(
+                {"detail": "callback_url ist erforderlich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.integrations.git.sync import GitHubSyncService
+
+        sync_service = GitHubSyncService(integration)
+        results = []
+        repos = integration.settings.get("repos", [])
+
+        for repo_config in repos:
+            owner = repo_config.get("owner", "")
+            repo = repo_config.get("repo", "")
+            if owner and repo:
+                result = sync_service.register_webhook(owner, repo, callback_url)
+                results.append({
+                    "repo": f"{owner}/{repo}",
+                    "success": result is not None,
+                    "hook_id": result.get("id") if result else None,
+                })
+
+        return Response({"webhooks": results}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"])
+    def conflicts(self, request, pk=None):
+        """Konflikte zwischen lokalen und Remote-Issues anzeigen (#20)."""
+        integration = self.get_object()
+
+        if integration.integration_type != IntegrationConfig.IntegrationType.GITHUB:
+            return Response(
+                {"detail": "Nur fuer GitHub-Integrationen verfuegbar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.integrations.git.sync import GitHubSyncService
+        from apps.projects.models import Project
+
+        sync_service = GitHubSyncService(integration)
+        all_conflicts = []
+        repos = integration.settings.get("repos", [])
+
+        for repo_config in repos:
+            owner = repo_config.get("owner", "")
+            repo = repo_config.get("repo", "")
+            project_id = repo_config.get("project_id")
+
+            if not (owner and repo and project_id):
+                continue
+
+            try:
+                project = Project.objects.get(id=project_id)
+                conflicts = sync_service.detect_conflicts(project, owner, repo)
+                all_conflicts.extend(conflicts)
+            except Project.DoesNotExist:
+                pass
+
+        return Response({"conflicts": all_conflicts, "count": len(all_conflicts)})
+
 
 class SyncLogViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """Nur-Lese-Zugriff auf Sync-Protokolle, gefiltert nach Integration."""

@@ -119,6 +119,50 @@ class GitHubClient:
         response.raise_for_status()
         return response.json()
 
+    def get_issue_comments(self, owner: str, repo: str, issue_number: int) -> list[dict]:
+        """Kommentare eines Issues abrufen."""
+        return self._paginate(f"/repos/{owner}/{repo}/issues/{issue_number}/comments")
+
+    def create_issue_comment(self, owner: str, repo: str, issue_number: int, body: str) -> dict:
+        """Kommentar zu einem Issue erstellen."""
+        response = self.client.post(
+            f"/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            json={"body": body},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def update_issue_comment(self, owner: str, repo: str, comment_id: int, body: str) -> dict:
+        """Bestehenden Kommentar aktualisieren."""
+        response = self.client.patch(
+            f"/repos/{owner}/{repo}/issues/comments/{comment_id}",
+            json={"body": body},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def get_milestones(self, owner: str, repo: str, state: str = "all") -> list[dict]:
+        """Milestones eines Repositories abrufen."""
+        return self._paginate(f"/repos/{owner}/{repo}/milestones", {"state": state})
+
+    def get_labels(self, owner: str, repo: str) -> list[dict]:
+        """Labels eines Repositories abrufen."""
+        return self._paginate(f"/repos/{owner}/{repo}/labels")
+
+    def create_label(self, owner: str, repo: str, name: str, color: str = "ededed") -> dict:
+        """Label in einem Repository erstellen."""
+        response = self.client.post(
+            f"/repos/{owner}/{repo}/labels",
+            json={"name": name, "color": color.lstrip("#")},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def delete_webhook(self, owner: str, repo: str, hook_id: int) -> None:
+        """Webhook loeschen."""
+        response = self.client.delete(f"/repos/{owner}/{repo}/hooks/{hook_id}")
+        response.raise_for_status()
+
     def get_webhooks(self, owner: str, repo: str) -> list[dict]:
         """Vorhandene Webhooks abrufen."""
         response = self.client.get(f"/repos/{owner}/{repo}/hooks")
