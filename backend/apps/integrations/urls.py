@@ -8,6 +8,7 @@ from .views import (
     CalendarEventViewSet,
     ConfluencePageViewSet,
     GitActivityViewSet,
+    GitHubProjectsViewSet,
     GitRepoAnalysisViewSet,
     IntegrationConfigViewSet,
     SyncLogViewSet,
@@ -24,6 +25,7 @@ router.register(r"import/jira", JiraImportViewSet, basename="import-jira")
 router.register(r"import/github", GitHubImportViewSet, basename="import-github")
 router.register(r"import/confluence", ConfluenceImportViewSet, basename="import-confluence")
 router.register(r"import/dashboard", ImportDashboardViewSet, basename="import-dashboard")
+router.register(r"github-projects", GitHubProjectsViewSet, basename="github-projects")
 
 urlpatterns = [
     path("", include(router.urls)),

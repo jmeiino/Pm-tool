@@ -2,6 +2,27 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { PaginatedResponse, GitActivity, GitRepoAnalysis } from "@/lib/types";
 
+interface GitHubProjectItem {
+  id: string;
+  content: {
+    title: string;
+    number: number;
+    state: string;
+    url: string;
+    repository?: { nameWithOwner: string };
+  } | null;
+}
+
+interface GitHubProject {
+  id: string;
+  title: string;
+  shortDescription: string;
+  url: string;
+  closed: boolean;
+  items: { totalCount: number; nodes: GitHubProjectItem[] };
+  fields?: { nodes: { id: string; name: string; options?: { id: string; name: string }[] }[] };
+}
+
 export function useGitActivities(filters?: {
   project?: number;
   event_type?: string;
@@ -74,6 +95,23 @@ export function useAnalyzeRepo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["repo-analyses"] });
     },
+  });
+}
+
+export function useGitHubProjects(login?: string, org?: string) {
+  const params = new URLSearchParams();
+  if (login) params.set("login", login);
+  if (org) params.set("org", org);
+
+  return useQuery({
+    queryKey: ["github-projects", login, org],
+    queryFn: async () => {
+      const { data } = await api.get<{ projects: GitHubProject[] }>(
+        `/integrations/github-projects/list_projects/?${params.toString()}`
+      );
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
   });
 }
 

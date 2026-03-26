@@ -118,6 +118,7 @@ Alle Endpunkte erfordern eine authentifizierte Session. Daten werden automatisch
 | `POST` | `/integrations/repo-analyses/{id}/analyze/` | KI-Analyse starten |
 | `POST` | `/integrations/repo-analyses/{id}/create-todos/` | Todos aus Analyse erstellen |
 | `POST` | `/integrations/github/webhook/` | GitHub Webhook-Endpoint (wird von GitHub aufgerufen) |
+| `GET` | `/integrations/github-projects/list_projects/` | GitHub Projects v2 abrufen (read-only, `?login=` oder `?org=`) |
 
 ## Kalender
 

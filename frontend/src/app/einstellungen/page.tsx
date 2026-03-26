@@ -12,6 +12,7 @@ import { ConfluenceConnectDialog } from "@/components/integrations/ConfluenceCon
 import { GitHubConnectDialog } from "@/components/integrations/GitHubConnectDialog";
 import { MicrosoftConnectDialog } from "@/components/integrations/MicrosoftConnectDialog";
 import { SyncStatusIndicator } from "@/components/integrations/SyncStatusIndicator";
+import { GitHubWebhookStatus } from "@/components/integrations/GitHubWebhookStatus";
 import {
   ArrowDownTrayIcon,
   CheckIcon,
@@ -608,6 +609,18 @@ function IntegrationSection() {
           </Link>
         </div>
       </Card>
+
+      {/* Webhook-Management fuer GitHub (#25) */}
+      {(() => {
+        const ghIntegration = getIntegration("github");
+        if (!ghIntegration) return null;
+        return (
+          <GitHubWebhookStatus
+            integrationId={ghIntegration.id}
+            settings={ghIntegration.settings}
+          />
+        );
+      })()}
 
       <JiraConnectDialog open={openDialog === "jira"} onClose={() => setOpenDialog(null)} />
       <ConfluenceConnectDialog open={openDialog === "confluence"} onClose={() => setOpenDialog(null)} />

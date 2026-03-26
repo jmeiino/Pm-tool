@@ -275,6 +275,43 @@ class GitRepoAnalysisViewSet(viewsets.ModelViewSet):
         )
 
 
+class GitHubProjectsViewSet(viewsets.ViewSet):
+    """GitHub Projects v2 read-only abrufen (#22)."""
+
+    @action(detail=False, methods=["get"])
+    def list_projects(self, request):
+        """GitHub Projects eines Users oder einer Organisation abrufen."""
+        integration = IntegrationConfig.objects.filter(
+            user=request.user,
+            integration_type=IntegrationConfig.IntegrationType.GITHUB,
+            is_enabled=True,
+        ).first()
+
+        if not integration:
+            return Response(
+                {"detail": "Keine aktive GitHub-Integration."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.integrations.git.client import GitHubClient
+
+        token = integration.credentials.get("token", "")
+        login = request.query_params.get("login", "")
+        org = request.query_params.get("org", "")
+
+        with GitHubClient(token=token) as client:
+            if org:
+                projects = client.get_org_projects(org)
+            elif login:
+                projects = client.get_user_projects(login)
+            else:
+                # Auto-detect: eigenen User abrufen
+                user_info = client.get_authenticated_user()
+                projects = client.get_user_projects(user_info.get("login", ""))
+
+        return Response({"projects": projects})
+
+
 class GitActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """Git-Aktivitäten anzeigen, filterbar nach Projekt."""
 

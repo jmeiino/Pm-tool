@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { useGitActivities } from "@/hooks/useGitHub";
 import { useProjects } from "@/hooks/useProjects";
+import { useIntegrations, useGitHubConflicts } from "@/hooks/useIntegrations";
+import { ConflictPanel } from "@/components/github/ConflictPanel";
 import { formatDate } from "@/lib/utils";
 import {
   CodeBracketIcon,
   ArrowsRightLeftIcon,
   CheckCircleIcon,
   XCircleIcon,
+  EyeIcon,
+  ExclamationTriangleIcon,
   FunnelIcon,
 } from "@heroicons/react/24/outline";
 
@@ -22,29 +26,42 @@ const EVENT_TYPE_CONFIG: Record<
   { label: string; color: string; icon: typeof CodeBracketIcon }
 > = {
   commit: { label: "Commit", color: "bg-gray-100 text-gray-700", icon: CodeBracketIcon },
-  pr_opened: { label: "PR geöffnet", color: "bg-blue-100 text-blue-700", icon: ArrowsRightLeftIcon },
+  pr_opened: { label: "PR geoeffnet", color: "bg-blue-100 text-blue-700", icon: ArrowsRightLeftIcon },
   pr_merged: { label: "PR gemerged", color: "bg-purple-100 text-purple-700", icon: CheckCircleIcon },
   pr_closed: { label: "PR geschlossen", color: "bg-red-100 text-red-700", icon: XCircleIcon },
+  pr_reviewed: { label: "PR Review", color: "bg-yellow-100 text-yellow-700", icon: EyeIcon },
 };
 
 const EVENT_FILTERS = [
   { value: "", label: "Alle" },
   { value: "commit", label: "Commits" },
-  { value: "pr_opened", label: "PRs geöffnet" },
+  { value: "pr_opened", label: "PRs geoeffnet" },
   { value: "pr_merged", label: "PRs gemerged" },
   { value: "pr_closed", label: "PRs geschlossen" },
+  { value: "pr_reviewed", label: "PR Reviews" },
 ];
 
 export default function GitHubPage() {
   const [eventFilter, setEventFilter] = useState("");
   const [projectFilter, setProjectFilter] = useState<number | undefined>();
   const [page, setPage] = useState(1);
+  const [showConflicts, setShowConflicts] = useState(false);
 
   const { data: activities, isLoading } = useGitActivities({
     event_type: eventFilter || undefined,
     project: projectFilter,
   });
   const { data: projects } = useProjects();
+  const { data: integrations } = useIntegrations();
+
+  // GitHub-Integration finden fuer Konflikterkennung
+  const githubIntegration = integrations?.results?.find(
+    (i) => i.integration_type === "github" && i.is_enabled
+  );
+  const { data: conflictsData } = useGitHubConflicts(
+    githubIntegration?.id || 0,
+    !!githubIntegration
+  );
 
   return (
     <div className="space-y-6">
@@ -53,7 +70,7 @@ export default function GitHubPage() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">GitHub</h2>
           <p className="text-sm text-gray-500">
-            Commits, Pull Requests und Code-Aktivität
+            Commits, Pull Requests und Code-Aktivitaet
           </p>
         </div>
       </div>
@@ -72,11 +89,48 @@ export default function GitHubPage() {
         >
           Repository-Analyse
         </Link>
+        <Link
+          href="/github/projects"
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Projects
+        </Link>
       </div>
+
+      {/* Konflikt-Banner (#20) */}
+      {conflictsData && conflictsData.count > 0 && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+              <div>
+                <p className="text-sm font-medium text-yellow-800">
+                  {conflictsData.count} {conflictsData.count === 1 ? "Issue hat einen Konflikt" : "Issues haben Konflikte"} zwischen lokal und GitHub
+                </p>
+                <p className="text-xs text-yellow-600 mt-0.5">
+                  Titel- oder Status-Abweichungen seit dem letzten Sync
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowConflicts(!showConflicts)}
+            >
+              {showConflicts ? "Ausblenden" : "Details anzeigen"}
+            </Button>
+          </div>
+          {showConflicts && (
+            <div className="mt-4">
+              <ConflictPanel conflicts={conflictsData.conflicts} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Statistik */}
       {activities && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
           {Object.entries(EVENT_TYPE_CONFIG).map(([type, config]) => {
             const count =
               activities.results?.filter((a) => a.event_type === type).length || 0;
@@ -143,10 +197,10 @@ export default function GitHubPage() {
         )}
       </div>
 
-      {/* Aktivitäten-Liste */}
-      <Card title={`Aktivitäten (${activities?.count || 0})`}>
+      {/* Aktivitaeten-Liste */}
+      <Card title={`Aktivitaeten (${activities?.count || 0})`}>
         {isLoading ? (
-          <p className="text-gray-500">Lade Aktivitäten...</p>
+          <p className="text-gray-500">Lade Aktivitaeten...</p>
         ) : activities?.results?.length ? (
           <div className="divide-y divide-gray-100">
             {activities.results.map((activity) => {
@@ -205,7 +259,7 @@ export default function GitHubPage() {
           <div className="text-center py-8">
             <CodeBracketIcon className="mx-auto h-12 w-12 text-gray-300" />
             <p className="mt-4 text-sm text-gray-500">
-              Keine Git-Aktivitäten vorhanden. Verbinde GitHub in den
+              Keine Git-Aktivitaeten vorhanden. Verbinde GitHub in den
               Einstellungen.
             </p>
           </div>

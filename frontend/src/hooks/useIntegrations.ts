@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { PaginatedResponse, IntegrationConfig, SyncLog } from "@/lib/types";
+import type { PaginatedResponse, IntegrationConfig, SyncLog, GitHubConflict, WebhookResult } from "@/lib/types";
 
 export function useIntegrations() {
   return useQuery({
@@ -64,6 +64,36 @@ export function useSyncIntegration() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
     },
+  });
+}
+
+export function useRegisterWebhook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, callback_url }: { id: number; callback_url: string }) => {
+      const { data } = await api.post<{ webhooks: WebhookResult[] }>(
+        `/integrations/configs/${id}/register-webhook/`,
+        { callback_url }
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrations"] });
+    },
+  });
+}
+
+export function useGitHubConflicts(integrationId: number, enabled = true) {
+  return useQuery({
+    queryKey: ["github-conflicts", integrationId],
+    queryFn: async () => {
+      const { data } = await api.get<{ conflicts: GitHubConflict[]; count: number }>(
+        `/integrations/configs/${integrationId}/conflicts/`
+      );
+      return data;
+    },
+    enabled: enabled && !!integrationId,
+    staleTime: 60 * 1000,
   });
 }
 

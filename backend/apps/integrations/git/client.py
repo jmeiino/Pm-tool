@@ -187,6 +187,133 @@ class GitHubClient:
         result["secret"] = webhook_secret
         return result
 
+    # ── GitHub Projects v2 (GraphQL) ──────────────────────────────────
+
+    def _graphql(self, query: str, variables: dict | None = None) -> dict:
+        """GraphQL-Anfrage an GitHub senden."""
+        response = self.client.post(
+            "https://api.github.com/graphql",
+            json={"query": query, "variables": variables or {}},
+        )
+        response.raise_for_status()
+        data = response.json()
+        if "errors" in data:
+            logger.warning("GraphQL errors: %s", data["errors"])
+        return data.get("data", {})
+
+    def get_user_projects(self, login: str, first: int = 20) -> list[dict]:
+        """GitHub Projects v2 eines Users abrufen."""
+        query = """
+        query($login: String!, $first: Int!) {
+          user(login: $login) {
+            projectsV2(first: $first) {
+              nodes {
+                id
+                title
+                shortDescription
+                url
+                closed
+                items(first: 100) {
+                  totalCount
+                  nodes {
+                    id
+                    content {
+                      ... on Issue {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                      ... on PullRequest {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                    }
+                    fieldValues(first: 20) {
+                      nodes {
+                        ... on ProjectV2ItemFieldSingleSelectValue {
+                          name
+                          field { ... on ProjectV2SingleSelectField { name } }
+                        }
+                        ... on ProjectV2ItemFieldTextValue {
+                          text
+                          field { ... on ProjectV2Field { name } }
+                        }
+                      }
+                    }
+                  }
+                }
+                fields(first: 20) {
+                  nodes {
+                    ... on ProjectV2SingleSelectField {
+                      id
+                      name
+                      options { id name }
+                    }
+                    ... on ProjectV2Field {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        data = self._graphql(query, {"login": login, "first": first})
+        user = data.get("user", {})
+        projects = user.get("projectsV2", {}).get("nodes", [])
+        return projects
+
+    def get_org_projects(self, org: str, first: int = 20) -> list[dict]:
+        """GitHub Projects v2 einer Organisation abrufen."""
+        query = """
+        query($org: String!, $first: Int!) {
+          organization(login: $org) {
+            projectsV2(first: $first) {
+              nodes {
+                id
+                title
+                shortDescription
+                url
+                closed
+                items(first: 100) {
+                  totalCount
+                  nodes {
+                    id
+                    content {
+                      ... on Issue {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                      ... on PullRequest {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        data = self._graphql(query, {"org": org, "first": first})
+        org_data = data.get("organization", {})
+        projects = org_data.get("projectsV2", {}).get("nodes", [])
+        return projects
+
     def close(self):
         """HTTP-Client schließen."""
         self.client.close()
