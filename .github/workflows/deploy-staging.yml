@@ -1,0 +1,71 @@
+name: Deploy Staging
+
+on:
+  workflow_run:
+    workflows: ["Backend CI", "Frontend CI"]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd ${{ vars.STAGING_APP_DIR || '/opt/pm-tool' }}
+
+            # Pull latest code
+            git pull origin main
+
+            # Pull latest images from GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose -f docker-compose.staging.yml pull
+
+            # Deploy with zero-downtime
+            docker compose -f docker-compose.staging.yml up -d --remove-orphans
+
+            # Run migrations
+            docker compose -f docker-compose.staging.yml exec -T backend python manage.py migrate --noinput
+
+            # Collect static files
+            docker compose -f docker-compose.staging.yml exec -T backend python manage.py collectstatic --noinput
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 12); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.STAGING_URL || 'http://staging.example.com' }}/api/docs/" || echo "000")
+            if [ "$status" = "200" ]; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Waiting for staging... (attempt $i, status: $status)"
+            sleep 10
+          done
+          echo "Health check failed after 2 minutes"
+          exit 1
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Staging deployment failed!\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+            }

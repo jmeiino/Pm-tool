@@ -31,3 +31,5 @@ Willkommen zur ausfuehrlichen Dokumentation des **PM-Tool** — einem persoenlic
 - [Entwicklung](guides/entwicklung.md) — Lokale Entwicklungsumgebung, Tests und Code-Struktur
 - [Deployment](guides/deployment.md) — Produktion mit Docker, Nginx und Gunicorn
 - [API-Referenz](guides/api-referenz.md) — Alle REST-Endpunkte im Detail
+- [CI/CD Pipeline](guides/ci-cd.md) — GitHub Actions, GHCR, Staging und Produktion
+- [Branch-Protection](guides/branch-protection.md) — Schutzregeln und CODEOWNERS
