@@ -409,6 +409,97 @@ export interface ConfluenceConfirmPage {
   analyze: boolean;
 }
 
+// ─── Admin Portal Types ──────────────────────────────────────────────────────
+
+export interface AdminDashboardStats {
+  users: { total: number; active: number };
+  projects: { total: number; active: number };
+  issues: { total: number; open: number };
+  todos: { total: number; pending: number };
+  integrations: { active: number; error: number };
+  sync: { errors_24h: number };
+  ai: { tokens_30d: number; results_30d: number };
+  agents: { active_tasks: number; total_tasks: number };
+}
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  is_staff: boolean;
+  is_active: boolean;
+  timezone: string;
+  daily_capacity_hours: number;
+  date_joined: string;
+  last_login: string | null;
+  project_count: number;
+  integration_count: number;
+}
+
+export interface SystemHealth {
+  database: { status: "ok" | "error"; detail?: string };
+  redis: { status: "ok" | "error"; detail?: string };
+  celery: { status: "ok" | "error"; workers?: number; detail?: string };
+}
+
+export interface AdminIntegration {
+  id: number;
+  user_id: number;
+  username: string;
+  user_full_name: string;
+  integration_type: string;
+  is_enabled: boolean;
+  sync_status: "idle" | "syncing" | "error";
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminSyncLog {
+  id: number;
+  integration_id: number;
+  integration_type: string;
+  username: string;
+  direction: "inbound" | "outbound" | "bidirectional";
+  status: "started" | "completed" | "failed";
+  records_processed: number;
+  records_created: number;
+  records_updated: number;
+  errors: unknown[];
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface AIStats {
+  total_results: number;
+  total_tokens: number;
+  recent_30d: { count: number; tokens: number };
+  by_model: Array<{ model_used: string; count: number; tokens: number }>;
+  by_type: Array<{ result_type: string; count: number; tokens: number }>;
+  cache: { valid_entries: number };
+}
+
+export interface AgentOverview {
+  companies: Array<{
+    id: number;
+    name: string;
+    user: string;
+    base_url: string;
+    is_enabled: boolean;
+  }>;
+  tasks: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  agents: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+}
+
 // API Responses
 export interface PaginatedResponse<T> {
   count: number;

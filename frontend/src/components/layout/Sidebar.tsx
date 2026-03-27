@@ -16,7 +16,12 @@ import {
   ArrowDownTrayIcon,
   UserGroupIcon,
   XMarkIcon,
+  ShieldCheckIcon,
+  UsersIcon,
+  ServerStackIcon,
+  CpuChipIcon,
 } from "@heroicons/react/24/outline";
+import { useCurrentUser } from "@/hooks/useUser";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: HomeIcon },
@@ -32,9 +37,17 @@ const navigation = [
   { name: "Einstellungen", href: "/einstellungen", icon: Cog6ToothIcon },
 ];
 
+const adminNavigation = [
+  { name: "Admin Dashboard", href: "/admin", icon: ShieldCheckIcon },
+  { name: "Benutzer", href: "/admin/benutzer", icon: UsersIcon },
+  { name: "System", href: "/admin/system", icon: ServerStackIcon },
+  { name: "AI & Agents", href: "/admin/ai-agents", icon: CpuChipIcon },
+];
+
 function NavContent() {
   const pathname = usePathname();
   const { setSidebarOpen } = useAppStore();
+  const { data: user } = useCurrentUser();
 
   return (
     <>
@@ -48,7 +61,7 @@ function NavContent() {
           </span>
         </div>
       </div>
-      <nav className="flex-1 space-y-0.5 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         {navigation.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -70,6 +83,36 @@ function NavContent() {
             </Link>
           );
         })}
+
+        {user?.is_staff && (
+          <>
+            <div className="my-3 border-t border-[rgba(255,255,255,0.07)]" />
+            <div className="px-3 pb-1 font-mono text-[0.6rem] uppercase tracking-widest text-[rgba(255,255,255,0.28)]">
+              Admin
+            </div>
+            {adminNavigation.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/admin" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
+                    isActive
+                      ? "bg-brand text-white"
+                      : "text-[rgba(255,255,255,0.55)] hover:bg-[rgba(0,158,227,0.10)] hover:text-white"
+                  )}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
     </>
   );

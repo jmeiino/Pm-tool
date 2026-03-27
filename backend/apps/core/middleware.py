@@ -22,6 +22,7 @@ def _get_default_user():
             "last_name": "Mustermann",
             "email": "max@beispiel.de",
             "is_active": True,
+            "is_staff": True,
         },
     )
     return _default_user_cache
