@@ -1,0 +1,106 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (e.g. sha-abc1234 or latest)"
+        required: false
+        default: "latest"
+      skip_confirmation:
+        description: "Skip manual confirmation (not recommended)"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify image exists in GHCR
+        run: |
+          echo "Deploying image tag: ${{ inputs.image_tag }}"
+          docker manifest inspect ghcr.io/${{ github.repository_owner }}/pm-tool-backend:${{ inputs.image_tag }} > /dev/null 2>&1 || {
+            echo "Backend image with tag '${{ inputs.image_tag }}' not found in GHCR"
+            exit 1
+          }
+          docker manifest inspect ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:${{ inputs.image_tag }} > /dev/null 2>&1 || {
+            echo "Frontend image with tag '${{ inputs.image_tag }}' not found in GHCR"
+            exit 1
+          }
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd ${{ vars.PROD_APP_DIR || '/opt/pm-tool' }}
+
+            # Login to GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Tag the currently running images for rollback
+            docker tag ghcr.io/${{ github.repository_owner }}/pm-tool-backend:latest ghcr.io/${{ github.repository_owner }}/pm-tool-backend:rollback 2>/dev/null || true
+            docker tag ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:latest ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:rollback 2>/dev/null || true
+
+            # Pull the target images
+            export IMAGE_TAG="${{ inputs.image_tag }}"
+            docker compose -f docker-compose.prod.yml pull
+
+            # Deploy
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Run migrations
+            docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+
+            # Collect static files
+            docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 12); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.PROD_URL || 'https://pm-tool.example.com' }}/api/docs/" || echo "000")
+            if [ "$status" = "200" ]; then
+              echo "Production health check passed"
+              exit 0
+            fi
+            echo "Waiting for production... (attempt $i, status: $status)"
+            sleep 10
+          done
+          echo "Health check failed — consider rolling back"
+          exit 1
+
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Production deployed successfully! Tag: `${{ inputs.image_tag }}`\nBy: ${{ github.actor }}"
+            }
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Production deployment FAILED! Tag: `${{ inputs.image_tag }}`\nBy: ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+            }

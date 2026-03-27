@@ -197,13 +197,34 @@ export interface GitRepoAnalysis {
 export interface GitActivity {
   id: number;
   project: number;
-  event_type: "commit" | "pr_opened" | "pr_merged" | "pr_closed";
+  event_type: "commit" | "pr_opened" | "pr_merged" | "pr_closed" | "pr_reviewed";
   event_type_display: string;
   author: string;
   title: string;
   url: string;
   event_date: string;
   linked_issue: number | null;
+}
+
+// GitHub Sync Conflicts
+export interface GitHubConflict {
+  issue_key: string;
+  github_issue_number: number;
+  local_title: string;
+  remote_title: string;
+  local_status: string;
+  remote_state: string;
+  local_updated: string;
+  remote_updated: string;
+  has_title_conflict: boolean;
+  has_status_conflict: boolean;
+}
+
+// GitHub Webhook Status
+export interface WebhookResult {
+  repo: string;
+  success: boolean;
+  hook_id: number | null;
 }
 
 // Confluence

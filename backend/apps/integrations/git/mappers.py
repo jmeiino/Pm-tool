@@ -25,7 +25,7 @@ def github_labels_to_issue_type(labels: list[dict]) -> str:
 
 
 def github_labels_to_priority(labels: list[dict]) -> str:
-    """Leite Priorität aus GitHub Labels ab."""
+    """Leite Prioritaet aus GitHub Labels ab."""
     priority_map = {
         "priority: critical": Issue.Priority.HIGHEST,
         "priority: high": Issue.Priority.HIGH,
@@ -43,7 +43,7 @@ def github_issue_to_local(gh_issue: dict, project, repo_full_name: str) -> dict:
     """Map GitHub Issue API-Response auf lokale Issue Model-Felder."""
     labels = gh_issue.get("labels", [])
 
-    return {
+    data = {
         "project": project,
         "title": gh_issue.get("title", ""),
         "description": gh_issue.get("body") or "",
@@ -55,6 +55,15 @@ def github_issue_to_local(gh_issue: dict, project, repo_full_name: str) -> dict:
         "github_issue_number": gh_issue.get("number"),
         "github_repo_full_name": repo_full_name,
     }
+
+    # Assignee mappen (#18)
+    assignee = gh_issue.get("assignee")
+    if assignee:
+        data["github_assignee_login"] = assignee.get("login", "")
+    else:
+        data["github_assignee_login"] = ""
+
+    return data
 
 
 LOCAL_STATUS_TO_GITHUB_STATE = {
@@ -84,4 +93,33 @@ def local_issue_to_github(issue) -> dict:
     if label:
         payload["labels"] = [label]
 
+    # Assignee (#18)
+    if issue.github_assignee_login:
+        payload["assignees"] = [issue.github_assignee_login]
+
     return payload
+
+
+def github_milestone_to_sprint(milestone: dict, project) -> dict:
+    """Map GitHub Milestone auf Sprint Model-Felder (#21)."""
+    from django.utils.dateparse import parse_date
+
+    state = milestone.get("state", "open")
+    if state == "closed":
+        sprint_status = "closed"
+    else:
+        sprint_status = "active"
+
+    due_on = milestone.get("due_on")
+    end_date = None
+    if due_on:
+        end_date = parse_date(due_on[:10])
+
+    return {
+        "project": project,
+        "name": milestone.get("title", ""),
+        "goal": milestone.get("description") or "",
+        "end_date": end_date,
+        "status": sprint_status,
+        "github_milestone_id": milestone.get("id"),
+    }

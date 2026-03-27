@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
 def poll_github_updates(self, integration_id: int):
-    """Periodischer Task: Neue Änderungen aus GitHub abrufen."""
+    """Periodischer Task: Neue Aenderungen aus GitHub abrufen."""
     from apps.integrations.models import IntegrationConfig
     from apps.notifications.services import NotificationService
 
@@ -41,6 +41,64 @@ def poll_github_updates(self, integration_id: int):
             severity="warning",
         )
         raise self.retry(exc=exc)
+
+
+@app.task(bind=True, max_retries=3, default_retry_delay=60)
+def push_github_updates(self, integration_id: int):
+    """Ausgehender Sync: Lokale Aenderungen nach GitHub pushen."""
+    from apps.integrations.models import IntegrationConfig
+    from apps.notifications.services import NotificationService
+
+    try:
+        integration = IntegrationConfig.objects.get(id=integration_id)
+    except IntegrationConfig.DoesNotExist:
+        logger.error("Integration %s nicht gefunden", integration_id)
+        return
+
+    try:
+        from .sync import GitHubSyncService
+
+        sync_service = GitHubSyncService(integration)
+        sync_service.sync_outbound()
+
+        integration.last_synced_at = timezone.now()
+        integration.sync_status = IntegrationConfig.SyncStatus.IDLE
+        integration.save(update_fields=["last_synced_at", "sync_status", "updated_at"])
+    except Exception as exc:
+        integration.sync_status = IntegrationConfig.SyncStatus.ERROR
+        integration.save(update_fields=["sync_status", "updated_at"])
+
+        NotificationService.create_notification(
+            user=integration.user,
+            title="GitHub-Push fehlgeschlagen",
+            message=str(exc),
+            notification_type="sync_error",
+            severity="warning",
+        )
+        raise self.retry(exc=exc)
+
+
+@app.task(bind=True, max_retries=3, default_retry_delay=60)
+def register_github_webhooks(self, integration_id: int, callback_url: str):
+    """Webhooks fuer alle konfigurierten Repos registrieren (#16)."""
+    from apps.integrations.models import IntegrationConfig
+
+    try:
+        integration = IntegrationConfig.objects.get(id=integration_id)
+    except IntegrationConfig.DoesNotExist:
+        logger.error("Integration %s nicht gefunden", integration_id)
+        return
+
+    from .sync import GitHubSyncService
+
+    sync_service = GitHubSyncService(integration)
+    repos = integration.settings.get("repos", [])
+
+    for repo_config in repos:
+        owner = repo_config.get("owner", "")
+        repo = repo_config.get("repo", "")
+        if owner and repo:
+            sync_service.register_webhook(owner, repo, callback_url)
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
