@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: simple
+          package-name: pm-tool
+
+      - uses: actions/checkout@v4
+        if: steps.release.outputs.release_created
+
+      - name: Tag GHCR images with release version
+        if: steps.release.outputs.release_created
+        run: |
+          TAG="${{ steps.release.outputs.tag_name }}"
+          echo "Tagging images with $TAG"
+
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          # Re-tag backend
+          docker pull ghcr.io/${{ github.repository_owner }}/pm-tool-backend:latest
+          docker tag ghcr.io/${{ github.repository_owner }}/pm-tool-backend:latest ghcr.io/${{ github.repository_owner }}/pm-tool-backend:$TAG
+          docker push ghcr.io/${{ github.repository_owner }}/pm-tool-backend:$TAG
+
+          # Re-tag frontend
+          docker pull ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:latest
+          docker tag ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:latest ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:$TAG
+          docker push ghcr.io/${{ github.repository_owner }}/pm-tool-frontend:$TAG

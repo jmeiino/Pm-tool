@@ -62,6 +62,7 @@ class Sprint(TimeStampedModel):
     end_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PLANNED)
     jira_sprint_id = models.IntegerField(null=True, blank=True, unique=True)
+    github_milestone_id = models.IntegerField(null=True, blank=True, unique=True)
 
     class Meta:
         verbose_name = "Sprint"
@@ -119,6 +120,7 @@ class Issue(TimeStampedModel):
     github_issue_id = models.IntegerField(null=True, blank=True, unique=True)
     github_issue_number = models.IntegerField(null=True, blank=True)
     github_repo_full_name = models.CharField(max_length=255, null=True, blank=True)
+    github_assignee_login = models.CharField(max_length=100, null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -141,6 +143,7 @@ class Comment(TimeStampedModel):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
     body = models.TextField()
     jira_comment_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    github_comment_id = models.BigIntegerField(null=True, blank=True, unique=True)
 
     class Meta:
         verbose_name = "Kommentar"

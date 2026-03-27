@@ -172,6 +172,7 @@ class GitActivity(TimeStampedModel):
         PR_OPENED = "pr_opened", "PR geöffnet"
         PR_MERGED = "pr_merged", "PR gemerged"
         PR_CLOSED = "pr_closed", "PR geschlossen"
+        PR_REVIEWED = "pr_reviewed", "PR reviewt"
 
     project = models.ForeignKey(
         "projects.Project",
@@ -179,7 +180,7 @@ class GitActivity(TimeStampedModel):
         related_name="git_activities",
     )
     event_type = models.CharField(
-        max_length=15,
+        max_length=20,
         choices=EventType.choices,
     )
     author = models.CharField(max_length=255)

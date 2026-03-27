@@ -1,0 +1,10 @@
+# Backend
+/backend/                    @jmeiino
+
+# Frontend
+/frontend/                   @jmeiino
+
+# CI/CD & Infrastructure
+/.github/                    @jmeiino
+/docker-compose*.yml         @jmeiino
+/nginx/                      @jmeiino

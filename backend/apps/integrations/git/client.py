@@ -119,6 +119,50 @@ class GitHubClient:
         response.raise_for_status()
         return response.json()
 
+    def get_issue_comments(self, owner: str, repo: str, issue_number: int) -> list[dict]:
+        """Kommentare eines Issues abrufen."""
+        return self._paginate(f"/repos/{owner}/{repo}/issues/{issue_number}/comments")
+
+    def create_issue_comment(self, owner: str, repo: str, issue_number: int, body: str) -> dict:
+        """Kommentar zu einem Issue erstellen."""
+        response = self.client.post(
+            f"/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            json={"body": body},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def update_issue_comment(self, owner: str, repo: str, comment_id: int, body: str) -> dict:
+        """Bestehenden Kommentar aktualisieren."""
+        response = self.client.patch(
+            f"/repos/{owner}/{repo}/issues/comments/{comment_id}",
+            json={"body": body},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def get_milestones(self, owner: str, repo: str, state: str = "all") -> list[dict]:
+        """Milestones eines Repositories abrufen."""
+        return self._paginate(f"/repos/{owner}/{repo}/milestones", {"state": state})
+
+    def get_labels(self, owner: str, repo: str) -> list[dict]:
+        """Labels eines Repositories abrufen."""
+        return self._paginate(f"/repos/{owner}/{repo}/labels")
+
+    def create_label(self, owner: str, repo: str, name: str, color: str = "ededed") -> dict:
+        """Label in einem Repository erstellen."""
+        response = self.client.post(
+            f"/repos/{owner}/{repo}/labels",
+            json={"name": name, "color": color.lstrip("#")},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def delete_webhook(self, owner: str, repo: str, hook_id: int) -> None:
+        """Webhook loeschen."""
+        response = self.client.delete(f"/repos/{owner}/{repo}/hooks/{hook_id}")
+        response.raise_for_status()
+
     def get_webhooks(self, owner: str, repo: str) -> list[dict]:
         """Vorhandene Webhooks abrufen."""
         response = self.client.get(f"/repos/{owner}/{repo}/hooks")
@@ -142,6 +186,133 @@ class GitHubClient:
         result = response.json()
         result["secret"] = webhook_secret
         return result
+
+    # ── GitHub Projects v2 (GraphQL) ──────────────────────────────────
+
+    def _graphql(self, query: str, variables: dict | None = None) -> dict:
+        """GraphQL-Anfrage an GitHub senden."""
+        response = self.client.post(
+            "https://api.github.com/graphql",
+            json={"query": query, "variables": variables or {}},
+        )
+        response.raise_for_status()
+        data = response.json()
+        if "errors" in data:
+            logger.warning("GraphQL errors: %s", data["errors"])
+        return data.get("data", {})
+
+    def get_user_projects(self, login: str, first: int = 20) -> list[dict]:
+        """GitHub Projects v2 eines Users abrufen."""
+        query = """
+        query($login: String!, $first: Int!) {
+          user(login: $login) {
+            projectsV2(first: $first) {
+              nodes {
+                id
+                title
+                shortDescription
+                url
+                closed
+                items(first: 100) {
+                  totalCount
+                  nodes {
+                    id
+                    content {
+                      ... on Issue {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                      ... on PullRequest {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                    }
+                    fieldValues(first: 20) {
+                      nodes {
+                        ... on ProjectV2ItemFieldSingleSelectValue {
+                          name
+                          field { ... on ProjectV2SingleSelectField { name } }
+                        }
+                        ... on ProjectV2ItemFieldTextValue {
+                          text
+                          field { ... on ProjectV2Field { name } }
+                        }
+                      }
+                    }
+                  }
+                }
+                fields(first: 20) {
+                  nodes {
+                    ... on ProjectV2SingleSelectField {
+                      id
+                      name
+                      options { id name }
+                    }
+                    ... on ProjectV2Field {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        data = self._graphql(query, {"login": login, "first": first})
+        user = data.get("user", {})
+        projects = user.get("projectsV2", {}).get("nodes", [])
+        return projects
+
+    def get_org_projects(self, org: str, first: int = 20) -> list[dict]:
+        """GitHub Projects v2 einer Organisation abrufen."""
+        query = """
+        query($org: String!, $first: Int!) {
+          organization(login: $org) {
+            projectsV2(first: $first) {
+              nodes {
+                id
+                title
+                shortDescription
+                url
+                closed
+                items(first: 100) {
+                  totalCount
+                  nodes {
+                    id
+                    content {
+                      ... on Issue {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                      ... on PullRequest {
+                        title
+                        number
+                        state
+                        url
+                        repository { nameWithOwner }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        data = self._graphql(query, {"org": org, "first": first})
+        org_data = data.get("organization", {})
+        projects = org_data.get("projectsV2", {}).get("nodes", [])
+        return projects
 
     def close(self):
         """HTTP-Client schließen."""
