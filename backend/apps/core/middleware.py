@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
 
@@ -31,23 +32,27 @@ def _get_default_user():
 class AutoAuthMiddleware:
     """
     Django-Middleware: setzt request.user auf den Default-User.
+    Nur aktiv wenn DEBUG=True (Entwicklungsmodus).
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if not request.user or not request.user.is_authenticated:
-            request.user = _get_default_user()
+        if settings.DEBUG:
+            if not request.user or not request.user.is_authenticated:
+                request.user = _get_default_user()
         return self.get_response(request)
 
 
 class AutoAuthDRF(BaseAuthentication):
     """
-    DRF-Authentication-Klasse: stellt sicher, dass DRF's Request-Wrapper
-    ebenfalls den Default-User bekommt (nicht AnonymousUser).
+    DRF-Authentication-Klasse fuer den Entwicklungsmodus.
+    Nur aktiv wenn DEBUG=True.
     """
 
     def authenticate(self, request):
+        if not settings.DEBUG:
+            return None
         user = _get_default_user()
         return (user, None)

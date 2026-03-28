@@ -13,4 +13,5 @@ anthropic>=0.34,<1.0
 python-dateutil>=2.8,<3.0
 python-decouple>=3.8,<4.0
 drf-spectacular>=0.27,<1.0
+djangorestframework-simplejwt>=5.3,<6.0
 gunicorn>=22.0,<23.0

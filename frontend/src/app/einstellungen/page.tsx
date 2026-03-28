@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { useIntegrations, useSyncIntegration, useDeleteIntegration } from "@/hooks/useIntegrations";
 import { useAIProvider, useUpdateAIProvider } from "@/hooks/useAI";
 import { useCurrentUser, useUpdateUser } from "@/hooks/useUser";
+import { api } from "@/lib/api";
 import { JiraConnectDialog } from "@/components/integrations/JiraConnectDialog";
 import { ConfluenceConnectDialog } from "@/components/integrations/ConfluenceConnectDialog";
 import { GitHubConnectDialog } from "@/components/integrations/GitHubConnectDialog";
@@ -282,6 +283,105 @@ function ProfileSection() {
           />
         </div>
       </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Password Change Section
+// ---------------------------------------------------------------------------
+function PasswordSection() {
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPending, setIsPending] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleSave = async () => {
+    setMessage(null);
+
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: "error", text: "Passwoerter stimmen nicht ueberein." });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setMessage({ type: "error", text: "Mindestens 8 Zeichen erforderlich." });
+      return;
+    }
+
+    setIsPending(true);
+    try {
+      await api.post("/auth/change-password/", {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      setMessage({ type: "success", text: "Passwort erfolgreich geaendert." });
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { old_password?: string[]; detail?: string } } };
+      const detail =
+        axiosErr.response?.data?.old_password?.[0] ||
+        axiosErr.response?.data?.detail ||
+        "Fehler beim Aendern des Passworts.";
+      setMessage({ type: "error", text: detail });
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <Card
+      title="Passwort aendern"
+      action={
+        <SaveButton
+          onClick={handleSave}
+          isPending={isPending}
+          isSuccess={message?.type === "success"}
+          label="Passwort aendern"
+        />
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <FieldLabel>Aktuelles Passwort</FieldLabel>
+          <TextInput
+            type="password"
+            value={oldPassword}
+            onChange={setOldPassword}
+            placeholder="Aktuelles Passwort"
+          />
+        </div>
+        <div>
+          <FieldLabel>Neues Passwort</FieldLabel>
+          <TextInput
+            type="password"
+            value={newPassword}
+            onChange={setNewPassword}
+            placeholder="Mind. 8 Zeichen"
+          />
+        </div>
+        <div>
+          <FieldLabel>Passwort bestaetigen</FieldLabel>
+          <TextInput
+            type="password"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            placeholder="Neues Passwort wiederholen"
+          />
+        </div>
+      </div>
+      {message && (
+        <p
+          className={`mt-3 text-sm ${
+            message.type === "success" ? "text-green-600" : "text-red-500"
+          }`}
+        >
+          {message.text}
+        </p>
+      )}
     </Card>
   );
 }
@@ -657,6 +757,7 @@ export default function EinstellungenPage() {
       </div>
 
       <ProfileSection />
+      <PasswordSection />
       <AIProviderSection />
       <IntegrationSection />
     </div>

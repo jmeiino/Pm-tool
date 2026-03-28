@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   BellIcon,
   ArrowPathIcon,
   Bars3Icon,
+  ArrowRightStartOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { useNotifications, useMarkNotificationRead } from "@/hooks/useNotifications";
 import { useIntegrations, useSyncIntegration } from "@/hooks/useIntegrations";
 import { useAppStore } from "@/stores/useAppStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { api } from "@/lib/api";
 
 export function Header() {
   const { data: notifications } = useNotifications();
@@ -18,6 +22,18 @@ export function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const { toggleSidebar } = useAppStore();
+  const { logout, refreshToken, user } = useAuthStore();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout/", { refresh: refreshToken });
+    } catch {
+      // Ignore errors - logout locally anyway
+    }
+    logout();
+    router.push("/login");
+  };
 
   const unreadCount = notifications?.count || 0;
 
@@ -49,6 +65,11 @@ export function Header() {
         </h1>
       </div>
       <div className="flex items-center gap-2 lg:gap-3">
+        {user && (
+          <span className="hidden text-xs text-[rgba(255,255,255,0.45)] lg:inline">
+            {user.first_name} {user.last_name}
+          </span>
+        )}
         <button
           className={`rounded-sm p-2 text-[rgba(255,255,255,0.55)] hover:bg-[rgba(0,158,227,0.10)] hover:text-white transition-colors ${
             syncing ? "animate-spin" : ""
@@ -115,6 +136,13 @@ export function Header() {
             </>
           )}
         </div>
+        <button
+          className="rounded-sm p-2 text-[rgba(255,255,255,0.55)] hover:bg-[rgba(0,158,227,0.10)] hover:text-white transition-colors"
+          title="Abmelden"
+          onClick={handleLogout}
+        >
+          <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
+        </button>
       </div>
     </header>
   );
