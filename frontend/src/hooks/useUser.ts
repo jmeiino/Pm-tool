@@ -10,6 +10,8 @@ export interface UserProfile {
   timezone: string;
   daily_capacity_hours: number;
   preferences: Record<string, unknown>;
+  is_staff: boolean;
+  is_active: boolean;
 }
 
 export function useCurrentUser() {

@@ -15,5 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
             "timezone",
             "daily_capacity_hours",
             "preferences",
+            "is_staff",
+            "is_active",
         ]
-        read_only_fields = ["id", "username"]
+        read_only_fields = ["id", "username", "is_staff", "is_active"]
