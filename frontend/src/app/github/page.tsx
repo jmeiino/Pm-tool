@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { useGitActivities } from "@/hooks/useGitHub";
 import { useProjects } from "@/hooks/useProjects";
-import { useIntegrations, useGitHubConflicts } from "@/hooks/useIntegrations";
+import { useIntegrations } from "@/hooks/useIntegrations";
+import { useGitHubConflicts } from "@/hooks/useImport";
 import { ConflictPanel } from "@/components/github/ConflictPanel";
 import { formatDate } from "@/lib/utils";
 import {
@@ -59,7 +60,6 @@ export default function GitHubPage() {
     (i) => i.integration_type === "github" && i.is_enabled
   );
   const { data: conflictsData } = useGitHubConflicts(
-    githubIntegration?.id || 0,
     !!githubIntegration
   );
 
