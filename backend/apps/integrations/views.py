@@ -1,9 +1,13 @@
+import logging
+
 from dateutil import parser as dateparser
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import CalendarEvent, ConfluencePage, GitActivity, GitRepoAnalysis, IntegrationConfig, SyncLog
+
+logger = logging.getLogger(__name__)
 from .serializers import (
     CalendarEventSerializer,
     ConfluencePageSerializer,
@@ -26,6 +30,33 @@ class IntegrationConfigViewSet(viewsets.ModelViewSet):
         integration = serializer.save(user=self.request.user)
         if integration.is_enabled:
             self._dispatch_sync(integration)
+
+    @action(detail=True, methods=["post"], url_path="register-webhooks")
+    def register_webhooks(self, request, pk=None):
+        """GitHub-Webhooks fuer alle konfigurierten Repos registrieren."""
+        integration = self.get_object()
+
+        if integration.integration_type != IntegrationConfig.IntegrationType.GITHUB:
+            return Response(
+                {"detail": "Nur fuer GitHub-Integrationen verfuegbar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        callback_url = request.data.get("callback_url")
+        if not callback_url:
+            return Response(
+                {"detail": "callback_url ist erforderlich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.integrations.git.tasks import register_github_webhooks
+
+        register_github_webhooks.delay(integration.id, callback_url)
+
+        return Response(
+            {"detail": "Webhook-Registrierung gestartet."},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     @action(detail=True, methods=["post"])
     def sync(self, request, pk=None):
@@ -207,6 +238,56 @@ class GitRepoAnalysisViewSet(viewsets.ModelViewSet):
             {"detail": f"{created_count} Aufgaben erstellt.", "count": created_count},
             status=status.HTTP_201_CREATED,
         )
+
+
+class GitHubProjectsViewSet(viewsets.ViewSet):
+    """GitHub Projects v2 über die GraphQL-API abrufen."""
+
+    @action(detail=False, methods=["get"], url_path="list_projects")
+    def list_projects(self, request):
+        login = request.query_params.get("login")
+        org = request.query_params.get("org")
+
+        if not login and not org:
+            return Response(
+                {"detail": "Parameter 'login' oder 'org' erforderlich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            config = IntegrationConfig.objects.get(
+                user=request.user,
+                integration_type=IntegrationConfig.IntegrationType.GITHUB,
+            )
+        except IntegrationConfig.DoesNotExist:
+            return Response(
+                {"detail": "Keine GitHub-Integration konfiguriert."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        token = config.credentials.get("access_token", "")
+        if not token:
+            return Response(
+                {"detail": "Kein GitHub Access-Token hinterlegt."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from .git.client import GitHubClient
+
+        try:
+            with GitHubClient(token) as client:
+                if org:
+                    projects = client.get_org_projects(org)
+                else:
+                    projects = client.get_user_projects(login)
+        except Exception:
+            logger.exception("Fehler beim Abrufen der GitHub Projects")
+            return Response(
+                {"detail": "Fehler beim Abrufen der GitHub Projects."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({"projects": projects})
 
 
 class GitActivityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

@@ -79,6 +79,22 @@ export function useDeleteIntegration() {
   });
 }
 
+export function useRegisterWebhook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, callback_url }: { id: number; callback_url: string }) => {
+      const { data } = await api.post(
+        `/integrations/configs/${id}/register-webhooks/`,
+        { callback_url }
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrations"] });
+    },
+  });
+}
+
 export function useSyncLogs(integrationId?: number) {
   const params = integrationId ? `?integration=${integrationId}` : "";
   return useQuery({
