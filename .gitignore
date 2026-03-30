@@ -48,6 +48,9 @@ Thumbs.db
 # Docker
 .docker/
 
+# SSL Certs
+nginx/certs/
+
 # Coverage
 htmlcov/
 .coverage
@@ -61,3 +64,8 @@ celerybeat.pid
 
 # pytest
 .pytest_cache/
+
+# Playwright
+e2e/.auth/
+test-results/
+playwright-report/
