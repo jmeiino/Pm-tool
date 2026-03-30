@@ -57,6 +57,7 @@ MIDDLEWARE = [
     "apps.core.middleware.AutoAuthMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.kpi_middleware.KPITrackingMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -212,3 +213,10 @@ OLLAMA_MODEL = config("OLLAMA_MODEL", default="llama3.1")
 OPENROUTER_API_KEY = config("OPENROUTER_API_KEY", default="")
 OPENROUTER_MODEL = config("OPENROUTER_MODEL", default="anthropic/claude-sonnet-4")
 OPENROUTER_REFERER = config("OPENROUTER_REFERER", default="http://localhost:4107")
+
+# KPI-Tracking
+KPI_API_URL = config("KPI_API_URL", default="")
+KPI_API_KEY = config("KPI_API_KEY", default="")
+
+# PM-Tool Base URL (fuer Paperclip callback_url Konstruktion)
+PM_TOOL_BASE_URL = config("PM_TOOL_BASE_URL", default="http://localhost:4107")
