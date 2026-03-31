@@ -85,15 +85,36 @@ class AgentBridgeService:
             logger.error("Fehler beim Abrufen des Firmenstatus: %s", e)
             return {"agents": [], "active_tasks": 0}
 
-    def sync_agent_profiles(self) -> list[dict]:
-        """Agent-Profile vom Service synchronisieren."""
+    def sync_agent_profiles(self) -> list["AgentProfile"]:
+        """Agent-Profile vom Service synchronisieren und in DB speichern."""
+        from .models import AgentProfile
+
         try:
             response = self.client.get("/api/v1/agents/")
             response.raise_for_status()
-            return response.json().get("agents", [])
+            agents_data = response.json().get("agents", [])
         except httpx.HTTPError as e:
             logger.error("Fehler beim Laden der Agent-Profile: %s", e)
             return []
+
+        valid_roles = {c.value for c in AgentProfile.Role}
+        synced = []
+        for agent in agents_data:
+            role = agent.get("role", "specialist")
+            if role not in valid_roles:
+                role = "specialist"
+            profile, _created = AgentProfile.objects.update_or_create(
+                external_id=agent["id"],
+                defaults={
+                    "company": self.company,
+                    "name": agent.get("name", "Unknown"),
+                    "role": role,
+                    "status": agent.get("status", "idle"),
+                    "capabilities": agent.get("capabilities", []),
+                },
+            )
+            synced.append(profile)
+        return synced
 
     def _pm_base_url(self) -> str:
         """PM-Tool Base-URL aus Settings."""

@@ -7,19 +7,32 @@ networks:
     name: inotec-ecosystem
 
 services:
+  db:
+    networks:
+      default:
+        aliases:
+          - pm-db
+
   backend:
     networks:
-      - default
-      - inotec-ecosystem
+      default:
+      inotec-ecosystem:
+        aliases:
+          - pm-backend
     environment:
-      PM_TOOL_BASE_URL: "http://backend:8000"
+      PM_TOOL_BASE_URL: "http://pm-backend:8000"
+      POSTGRES_HOST: pm-db
 
   celery:
     networks:
-      - default
-      - inotec-ecosystem
+      default:
+      inotec-ecosystem:
+    environment:
+      POSTGRES_HOST: pm-db
 
   celery-beat:
     networks:
-      - default
-      - inotec-ecosystem
+      default:
+      inotec-ecosystem:
+    environment:
+      POSTGRES_HOST: pm-db

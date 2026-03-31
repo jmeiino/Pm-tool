@@ -35,7 +35,11 @@ class AgentProfile(TimeStampedModel):
 
     class Role(models.TextChoices):
         CEO = "ceo", "CEO"
+        ORCHESTRATOR = "orchestrator", "Orchestrator"
         DEPARTMENT_HEAD = "department_head", "Abteilungsleiter"
+        CODER = "coder", "Entwickler"
+        WRITER = "writer", "Redakteur"
+        RESEARCHER = "researcher", "Rechercheur"
         SPECIALIST = "specialist", "Spezialist"
         QA = "qa", "Qualitätssicherung"
 
