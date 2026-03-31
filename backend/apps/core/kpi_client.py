@@ -1,6 +1,12 @@
-"""Leichtgewichtiger KPI-Tracking-Client (fire-and-forget)."""
+"""Leichtgewichtiger KPI-Tracking-Client (fire-and-forget).
+
+Sendet Events im KPI-Tracking v1 Batch-Format:
+  POST /api/v1/events  — Array von Event-Objekten mit event_id, app_id,
+  event_type, category, kpi_id, value, timestamp.
+"""
 
 import logging
+import uuid
 from datetime import datetime, timezone
 
 import httpx
@@ -9,6 +15,16 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 _client: httpx.Client | None = None
+
+# Mapping von Event-Namen zu KPI-Tracking Kategorien
+_EVENT_CATEGORIES = {
+    "project.created": "usage",
+    "project.issue_created": "usage",
+    "todo.created": "usage",
+    "integration.sync": "usage",
+    "agent.task_delegated": "usage",
+    "test.ping": "usage",
+}
 
 
 def _get_client() -> httpx.Client | None:
@@ -38,15 +54,23 @@ def track_event(event: str, data: dict | None = None, source: str = "pm-tool"):
     if not client:
         return
 
-    payload = {
-        "source": source,
-        "event": event,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "data": data or {},
-    }
+    category = _EVENT_CATEGORIES.get(event, "usage")
+    payload = [
+        {
+            "event_id": str(uuid.uuid4()),
+            "app_id": source,
+            "environment": "development",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "event_type": event,
+            "category": category,
+            "kpi_id": event,
+            "value": 1,
+            "metadata": data or {},
+        }
+    ]
 
     try:
-        response = client.post("/api/events", json=payload)
+        response = client.post("/api/v1/events", json=payload)
         if response.status_code >= 400:
             logger.warning("KPI-Event %s fehlgeschlagen: HTTP %s", event, response.status_code)
     except Exception:
