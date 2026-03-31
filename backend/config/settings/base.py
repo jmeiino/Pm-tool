@@ -216,6 +216,7 @@ OPENROUTER_REFERER = config("OPENROUTER_REFERER", default="http://localhost:4107
 
 # KPI-Tracking
 KPI_API_URL = config("KPI_API_URL", default="")
+KPI_TRACKING_URL = config("KPI_TRACKING_URL", default="") or KPI_API_URL
 KPI_API_KEY = config("KPI_API_KEY", default="")
 
 # PM-Tool Base URL (fuer Paperclip callback_url Konstruktion)
