@@ -58,6 +58,9 @@ htmlcov/
 coverage.xml
 *.cover
 
+# Backups
+backups/
+
 # Celery
 celerybeat-schedule
 celerybeat.pid
