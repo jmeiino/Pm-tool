@@ -290,7 +290,7 @@ class AgentBridgeService:
                     "name": agent.get("name", agent.get("displayName", "Unknown")),
                     "role": role,
                     "status": agent.get("status", "idle"),
-                    "capabilities": agent.get("capabilities", []),
+                    "capabilities": agent.get("capabilities") or [],
                 },
             )
             synced.append(profile)
