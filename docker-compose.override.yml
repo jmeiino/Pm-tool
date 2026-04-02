@@ -1,0 +1,38 @@
+# Oekosystem-Integration: Shared Network fuer Paperclip/Agent-Agency/KPI-Tracking
+# Aktivieren: docker network create inotec-ecosystem (einmalig)
+
+networks:
+  inotec-ecosystem:
+    external: true
+    name: inotec-ecosystem
+
+services:
+  db:
+    networks:
+      default:
+        aliases:
+          - pm-db
+
+  backend:
+    networks:
+      default:
+      inotec-ecosystem:
+        aliases:
+          - pm-backend
+    environment:
+      PM_TOOL_BASE_URL: "http://pm-backend:8000"
+      POSTGRES_HOST: pm-db
+
+  celery:
+    networks:
+      default:
+      inotec-ecosystem:
+    environment:
+      POSTGRES_HOST: pm-db
+
+  celery-beat:
+    networks:
+      default:
+      inotec-ecosystem:
+    environment:
+      POSTGRES_HOST: pm-db

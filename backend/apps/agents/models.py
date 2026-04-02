@@ -21,6 +21,27 @@ class AgentCompanyConfig(TimeStampedModel):
     is_enabled = models.BooleanField(default=True)
     settings = models.JSONField(default=dict, blank=True)
 
+    # Paperclip-Integration
+    use_paperclip = models.BooleanField(
+        default=True,
+        help_text="Paperclip als Vermittler nutzen (statt Agent-Agency direkt)",
+    )
+    paperclip_base_url = models.CharField(
+        max_length=500,
+        default="http://paperclip-app:3100",
+        help_text="Paperclip API-Basis-URL",
+    )
+    paperclip_company_id = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Paperclip Company-UUID",
+    )
+    paperclip_api_key = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Paperclip Board-API-Key",
+    )
+
     class Meta:
         verbose_name = "Agent Company"
         verbose_name_plural = "Agent Companies"
@@ -35,7 +56,11 @@ class AgentProfile(TimeStampedModel):
 
     class Role(models.TextChoices):
         CEO = "ceo", "CEO"
+        ORCHESTRATOR = "orchestrator", "Orchestrator"
         DEPARTMENT_HEAD = "department_head", "Abteilungsleiter"
+        CODER = "coder", "Entwickler"
+        WRITER = "writer", "Redakteur"
+        RESEARCHER = "researcher", "Rechercheur"
         SPECIALIST = "specialist", "Spezialist"
         QA = "qa", "Qualitätssicherung"
 

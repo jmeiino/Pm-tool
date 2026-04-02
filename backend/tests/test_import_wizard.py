@@ -611,7 +611,7 @@ class TestGitHubSyncIssues:
 
     @patch("apps.integrations.git.sync.GitHubClient")
     def test_sync_issues_updates_existing(self, MockGitHubClient, user):
-        """sync_issues aktualisiert nur bereits importierte Issues."""
+        """sync_issues aktualisiert existierende und importiert neue Issues (auto_import=True)."""
         project = ProjectFactory(owner=user, github_repo_full_name="testuser/repo")
         # Erstelle ein bereits importiertes Issue
         Issue.objects.create(
@@ -638,7 +638,7 @@ class TestGitHubSyncIssues:
             {
                 "id": 30002,
                 "number": 2,
-                "title": "New Issue (should be ignored)",
+                "title": "New Issue (auto-imported)",
                 "body": "",
                 "state": "open",
                 "labels": [],
@@ -658,23 +658,24 @@ class TestGitHubSyncIssues:
         service = GitHubSyncService(integration)
         created, updated = service.sync_issues(project, "testuser", "repo")
 
-        assert created == 0
         assert updated == 1
+        assert created == 1  # auto_import=True imports new issues
 
         issue = Issue.objects.get(github_issue_id=30001)
         assert issue.title == "Updated Title"
         assert issue.status == "done"
 
-        # Issue 30002 sollte NICHT importiert worden sein
-        assert not Issue.objects.filter(github_issue_id=30002).exists()
+        # Issue 30002 wird mit auto_import automatisch importiert
+        assert Issue.objects.filter(github_issue_id=30002).exists()
 
     @patch("apps.integrations.git.sync.GitHubClient")
     def test_sync_issues_skips_without_imported(self, MockGitHubClient, user):
-        """sync_issues überspringt Projekte ohne importierte GitHub Issues."""
+        """sync_issues importiert neue Issues auch ohne vorhandene (auto_import=True)."""
         project = ProjectFactory(owner=user)
 
         mock_client = MagicMock()
         MockGitHubClient.return_value = mock_client
+        mock_client.get_issues.return_value = []
 
         integration = IntegrationConfigFactory(
             user=user,
@@ -690,7 +691,7 @@ class TestGitHubSyncIssues:
 
         assert created == 0
         assert updated == 0
-        mock_client.get_issues.assert_not_called()
+        mock_client.get_issues.assert_called_once()
 
 
 # ─── Model Tests ─────────────────────────────────────────────────────────────

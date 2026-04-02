@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements/base.txt
 
 COPY . .
 
+# inotec-kpi-tracker SDK (vendored, kein PyPI-Zugriff noetig)
+RUN cp -r /app/vendor/inotec-kpi-tracker/inotec_kpi_tracker /usr/local/lib/python3.12/site-packages/
+
 EXPOSE 8000
 
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

@@ -31,6 +31,18 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return DailyPlan.objects.filter(user=self.request.user).prefetch_related("items__todo")
 
+    def retrieve(self, request, *args, **kwargs):
+        """Tagesplan abrufen — erstellt automatisch einen leeren Plan falls keiner existiert."""
+        date = kwargs.get("date")
+        plan, _created = DailyPlan.objects.get_or_create(
+            user=request.user,
+            date=date,
+        )
+        serializer = self.get_serializer(
+            self.get_queryset().get(pk=plan.pk)
+        )
+        return Response(serializer.data)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -84,11 +96,27 @@ class DailyPlanViewSet(viewsets.ModelViewSet):
         daily_plan = self.get_object()
 
         try:
+            from apps.ai.client import get_ai_client
             from apps.ai.services import AIService
             from apps.integrations.models import CalendarEvent
             from apps.integrations.serializers import CalendarEventSerializer
 
+            # Prüfen ob ein KI-Provider konfiguriert ist
+            try:
+                get_ai_client(user=request.user)
+            except Exception:
+                return Response(
+                    {"detail": "Kein KI-Provider konfiguriert. Bitte in den Einstellungen einen API-Key hinterlegen."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             todos = PersonalTodo.objects.filter(user=request.user, status__in=["pending", "in_progress"])
+            if not todos.exists():
+                return Response(
+                    {"detail": "Keine offenen Aufgaben vorhanden. Erstelle zuerst Aufgaben."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             calendar_events = CalendarEvent.objects.filter(
                 user=request.user,
                 start_time__date=daily_plan.date,

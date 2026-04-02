@@ -45,16 +45,20 @@ def _get_ai_prefs(user):
 class AIViewSet(viewsets.ViewSet):
     """ViewSet fuer KI-gestuetzte Funktionen."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.service = AIService()
+    def _get_service(self, request):
+        """AIService mit user-spezifischem Provider erstellen."""
+        from .client import get_ai_client
+        client = get_ai_client(user=request.user)
+        service = AIService()
+        service.client = client
+        return service
 
     @action(detail=False, methods=["post"])
     def prioritize(self, request):
         serializer = PrioritizeRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            result = self.service.prioritize_todos(serializer.validated_data["todos"])
+            result = self._get_service(request).prioritize_todos(serializer.validated_data["todos"])
             return Response({"result": result, "cached": False})
         except Exception as e:
             logger.error("Fehler bei der Priorisierung: %s", e)
@@ -65,7 +69,7 @@ class AIViewSet(viewsets.ViewSet):
         serializer = SummarizeRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            result = self.service.summarize_content(
+            result = self._get_service(request).summarize_content(
                 serializer.validated_data["content"],
                 serializer.validated_data.get("content_type", "text"),
             )
@@ -79,7 +83,7 @@ class AIViewSet(viewsets.ViewSet):
         serializer = ExtractActionsRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            result = self.service.extract_action_items(serializer.validated_data["text"])
+            result = self._get_service(request).extract_action_items(serializer.validated_data["text"])
             return Response({"result": result, "cached": False})
         except Exception as e:
             logger.error("Fehler bei der Aktionspunkt-Extraktion: %s", e)
@@ -90,7 +94,7 @@ class AIViewSet(viewsets.ViewSet):
         serializer = DailyPlanRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            result = self.service.suggest_daily_plan(
+            result = self._get_service(request).suggest_daily_plan(
                 serializer.validated_data["todos"],
                 serializer.validated_data.get("calendar_events", []),
                 serializer.validated_data.get("capacity_hours", 8.0),

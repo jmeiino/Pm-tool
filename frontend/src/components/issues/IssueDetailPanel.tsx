@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { useIssue } from "@/hooks/useIssues";
 import { statusLabels, formatDate } from "@/lib/utils";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { DelegateToAgentButton } from "./DelegateToAgentButton";
+import { AgentDeliverables } from "./AgentDeliverables";
 
 const priorityLabels: Record<string, string> = {
   highest: "Höchste",
@@ -126,6 +128,20 @@ export function IssueDetailPanel({
                   ))}
                 </ul>
               </div>
+            )}
+
+            {/* AI-Agent Delegation */}
+            <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-200 p-3">
+              <span className="text-xs text-gray-500">AI-Agent</span>
+              <DelegateToAgentButton
+                issueId={issue.id}
+                activeAgentTaskStatus={issue.agent_tasks?.[0]?.status}
+              />
+            </div>
+
+            {/* Agent Deliverables */}
+            {issue.agent_tasks?.[0]?.deliverables?.length > 0 && (
+              <AgentDeliverables deliverables={issue.agent_tasks[0].deliverables} />
             )}
 
             {/* Kommentare */}
