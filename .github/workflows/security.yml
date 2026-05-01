@@ -83,7 +83,7 @@ jobs:
         run: docker build -t pm-tool-backend:scan ./backend
 
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: "pm-tool-backend:scan"
           format: "table"
@@ -98,7 +98,7 @@ jobs:
             ./frontend
 
       - name: Scan frontend image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: "pm-tool-frontend:scan"
           format: "table"
